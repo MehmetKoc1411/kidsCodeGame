@@ -1,12 +1,18 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { View, StyleSheet, Dimensions } from 'react-native';
+import Animated, {
+  useSharedValue,
+  useAnimatedStyle,
+  withSpring,
+  withTiming,
+  Easing,
+} from 'react-native-reanimated';
 import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useGameStore } from '../../store/useGameStore';
 import { LEVELS } from '../../core/levels';
 
 const { width } = Dimensions.get('window');
-// Hem küçük ekranlarda hem tabletlerde taşmayı ve ezilmeyi önleyen dengeli boyut
-const GRID_SIZE = Math.min(width - 40, 330);
+const GRID_SIZE = width - 36;
 
 export const GameGrid = () => {
   const currentLevelIndex = useGameStore((s) => s.currentLevelIndex);
@@ -16,26 +22,54 @@ export const GameGrid = () => {
   const level = LEVELS[currentLevelIndex];
   const cellSize = GRID_SIZE / level.gridSize.cols;
 
-  const getRotationAngle = () => {
+  // Akıcı hareket ve dönüş değerleri
+  const charX = useSharedValue(character.x * cellSize);
+  const charY = useSharedValue(character.y * cellSize);
+  const charRotate = useSharedValue(0);
+
+  // Açı hesaplama (Her zaman en kısa yoldan dönmesi için)
+  const getTargetAngle = () => {
     switch (character.direction) {
-      case 'UP': return '0deg';
-      case 'RIGHT': return '90deg';
-      case 'DOWN': return '180deg';
-      case 'LEFT': return '270deg';
+      case 'UP': return 0;
+      case 'RIGHT': return 90;
+      case 'DOWN': return 180;
+      case 'LEFT': return 270;
     }
   };
 
+  useEffect(() => {
+    // Koordinat geçişi: Yaylanarak yumuşak kayma
+    charX.value = withSpring(character.x * cellSize, { damping: 14, stiffness: 100 });
+    charY.value = withSpring(character.y * cellSize, { damping: 14, stiffness: 100 });
+
+    // Açı geçişi
+    charRotate.value = withTiming(getTargetAngle(), {
+      duration: 250,
+      easing: Easing.out(Easing.quad),
+    });
+  }, [character.x, character.y, character.direction, cellSize]);
+
+  const animatedBotStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: charX.value },
+        { translateY: charY.value },
+        { rotate: `${charRotate.value}deg` },
+      ],
+    };
+  });
+
   return (
-    <View style={[styles.board, { width: GRID_SIZE, height: GRID_SIZE }]}>
+    <View style={[styles.boardContainer, { width: GRID_SIZE, height: GRID_SIZE }]}>
+      {/* Zemin Izgarası */}
       {Array.from({ length: level.gridSize.rows }).map((_, r) => (
-        <View key={`row-${r}`} style={[styles.row, { height: cellSize }]}>
+        <View key={`row-${r}`} style={styles.row}>
           {Array.from({ length: level.gridSize.cols }).map((_, c) => {
             const isTarget = level.target.x === c && level.target.y === r;
             const isWall = level.walls.some((w) => w.x === c && w.y === r);
             const hasStar =
               level.stars.some((s) => s.x === c && s.y === r) &&
               !collectedStars.some((s) => s.x === c && s.y === r);
-            const isChar = character.x === c && character.y === r;
 
             return (
               <View
@@ -48,46 +82,21 @@ export const GameGrid = () => {
                   isTarget && styles.targetCell,
                 ]}
               >
-                {/* Hedef Bayrağı */}
-                {isTarget && !isChar && (
+                {isTarget && (
                   <View style={styles.targetBadge}>
-                    <Ionicons name="flag" size={cellSize * 0.42} color="#10B981" />
+                    <Ionicons name="flag" size={cellSize * 0.45} color="#10B981" />
                   </View>
                 )}
 
-                {/* Engel / Bariyer Kutusu */}
                 {isWall && (
                   <View style={styles.obstacleContainer}>
-                    <MaterialCommunityIcons
-                      name="cube-outline"
-                      size={cellSize * 0.45}
-                      color="#475569"
-                    />
+                    <MaterialCommunityIcons name="cube-outline" size={cellSize * 0.48} color="#64748B" />
                   </View>
                 )}
 
-                {/* Yıldız */}
-                {hasStar && !isChar && (
+                {hasStar && (
                   <View style={styles.starContainer}>
-                    <Ionicons name="star" size={cellSize * 0.42} color="#FBBF24" />
-                  </View>
-                )}
-
-                {/* Robot Karakter */}
-                {isChar && (
-                  <View
-                    style={[
-                      styles.characterAvatar,
-                      {
-                        width: cellSize * 0.74,
-                        height: cellSize * 0.74,
-                        borderRadius: (cellSize * 0.74) / 2,
-                        transform: [{ rotate: getRotationAngle() }],
-                      },
-                    ]}
-                  >
-                    <View style={styles.directionNose} />
-                    <FontAwesome5 name="robot" size={cellSize * 0.4} color="#FFFFFF" />
+                    <Ionicons name="star" size={cellSize * 0.46} color="#F59E0B" />
                   </View>
                 )}
               </View>
@@ -95,24 +104,50 @@ export const GameGrid = () => {
           })}
         </View>
       ))}
+
+      {/* Akıcı Hareket Eden Karakter Katmanı */}
+      <Animated.View
+        style={[
+          styles.botWrapper,
+          { width: cellSize, height: cellSize },
+          animatedBotStyle,
+        ]}
+      >
+        <View
+          style={[
+            styles.characterAvatar,
+            {
+              width: cellSize * 0.78,
+              height: cellSize * 0.78,
+              borderRadius: (cellSize * 0.78) / 2,
+            },
+          ]}
+        >
+          <View style={styles.directionNose} />
+          <FontAwesome5 name="robot" size={cellSize * 0.42} color="#FFFFFF" />
+        </View>
+      </Animated.View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  board: {
-    backgroundColor: '#F8FAFC',
-    borderRadius: 18,
+  boardContainer: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 22,
     overflow: 'hidden',
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-    elevation: 3,
-    shadowColor: '#0F172A',
-    shadowOpacity: 0.08,
-    shadowRadius: 8,
+    borderWidth: 4,
+    borderColor: '#E2E8F0',
+    borderBottomWidth: 7, // 3D zemin hissi
+    position: 'relative',
+    elevation: 6,
+    shadowColor: '#64748B',
+    shadowOpacity: 0.15,
+    shadowRadius: 10,
     shadowOffset: { width: 0, height: 4 },
   },
   row: {
+    flex: 1,
     flexDirection: 'row',
   },
   cell: {
@@ -123,7 +158,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
   },
   cellOdd: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: '#F8FAFC',
   },
   wallCell: {
     backgroundColor: '#E2E8F0',
@@ -133,38 +168,50 @@ const styles = StyleSheet.create({
   },
   obstacleContainer: {
     backgroundColor: '#CBD5E1',
-    padding: 5,
-    borderRadius: 8,
+    padding: 6,
+    borderRadius: 10,
+    borderBottomWidth: 3,
+    borderColor: '#94A3B8',
   },
   starContainer: {
     shadowColor: '#F59E0B',
-    shadowOpacity: 0.35,
-    shadowRadius: 5,
+    shadowOpacity: 0.5,
+    shadowRadius: 6,
     shadowOffset: { width: 0, height: 0 },
-    elevation: 2,
+    elevation: 4,
   },
   targetBadge: {
-    padding: 5,
-    borderRadius: 8,
+    padding: 6,
+    borderRadius: 12,
     backgroundColor: '#D1FAE5',
   },
+  botWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+  },
   characterAvatar: {
-    backgroundColor: '#4F46E5',
+    backgroundColor: '#6366F1',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#4F46E5',
-    shadowOpacity: 0.35,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 3 },
-    elevation: 5,
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
+    borderBottomWidth: 4,
+    borderColor: '#4338CA', // Buton basma derinliği
     position: 'relative',
   },
   directionNose: {
     position: 'absolute',
     top: 2,
-    width: 5,
-    height: 5,
+    width: 6,
+    height: 6,
     backgroundColor: '#38BDF8',
-    borderRadius: 2.5,
+    borderRadius: 3,
   },
 });

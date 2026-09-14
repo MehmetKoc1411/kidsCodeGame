@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text } from 'react-native';
+import { StyleSheet, Text, View } from 'react-native';
 import { GestureDetector, Gesture } from 'react-native-gesture-handler';
 import Animated, {
   useSharedValue,
@@ -20,6 +20,7 @@ interface DraggableBlockProps {
   type: CommandType;
   label: string;
   color: string;
+  shadowColor: string;
   icon: string;
   dropZoneLayout: DropAreaLayout | null;
   onDropSuccess: (type: CommandType) => void;
@@ -29,6 +30,7 @@ export const DraggableBlock = ({
   type,
   label,
   color,
+  shadowColor,
   icon,
   dropZoneLayout,
   onDropSuccess,
@@ -52,7 +54,6 @@ export const DraggableBlock = ({
         const dropAbsoluteX = event.absoluteX;
         const dropAbsoluteY = event.absoluteY;
 
-        // Bırakılan noktanın DropZone sınırları içinde olup olmadığının kontrolü
         const isInside =
           dropAbsoluteX >= dropZoneLayout.x &&
           dropAbsoluteX <= dropZoneLayout.x + dropZoneLayout.width &&
@@ -64,7 +65,6 @@ export const DraggableBlock = ({
         }
       }
 
-      // Bloğu yayınlanmış orijinal konumuna yaylanarak geri döndür
       translateX.value = withSpring(0, { damping: 15, stiffness: 120 });
       translateY.value = withSpring(0, { damping: 15, stiffness: 120 });
     });
@@ -74,18 +74,26 @@ export const DraggableBlock = ({
       transform: [
         { translateX: translateX.value },
         { translateY: translateY.value },
-        { scale: isDragging.value ? 1.08 : 1 },
+        { scale: isDragging.value ? 1.12 : 1 },
       ],
       zIndex: isDragging.value ? 999 : 1,
-      elevation: isDragging.value ? 8 : 2,
+      elevation: isDragging.value ? 10 : 3,
     };
   });
 
   return (
     <GestureDetector gesture={panGesture}>
-      <Animated.View style={[styles.block, { backgroundColor: color }, animatedStyle]}>
+      <Animated.View
+        style={[
+          styles.block,
+          { backgroundColor: color, borderBottomColor: shadowColor },
+          animatedStyle,
+        ]}
+      >
         <Text style={styles.icon}>{icon}</Text>
         <Text style={styles.label}>{label}</Text>
+        {/* Sağ kenardaki yapboz tırnağı hissi */}
+        <View style={[styles.puzzleTab, { backgroundColor: color }]} />
       </Animated.View>
     </GestureDetector>
   );
@@ -95,13 +103,12 @@ const styles = StyleSheet.create({
   block: {
     flex: 1,
     paddingVertical: 12,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
+    borderBottomWidth: 4, // 3D Plastik oyuncak tuş efekti
+    position: 'relative',
+    overflow: 'visible',
   },
   icon: {
     fontSize: 18,
@@ -109,7 +116,18 @@ const styles = StyleSheet.create({
   },
   label: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 12,
+    letterSpacing: 0.3,
+  },
+  puzzleTab: {
+    position: 'absolute',
+    right: -4,
+    top: '40%',
+    width: 6,
+    height: 10,
+    borderTopRightRadius: 4,
+    borderBottomRightRadius: 4,
+    opacity: 0.7,
   },
 });

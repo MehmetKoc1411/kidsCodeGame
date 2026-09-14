@@ -4,11 +4,14 @@ import { useGameStore } from '../../store/useGameStore';
 import { CommandType, CodeBlock } from '../../core/types';
 import { DraggableBlock } from './DraggableBlock';
 
-const BLOCK_CONFIG: Record<CommandType, { label: string; color: string; icon: string }> = {
-  FORWARD: { label: 'İleri', color: '#3B82F6', icon: '⬆️' },
-  TURN_RIGHT: { label: 'Sağa', color: '#8B5CF6', icon: '↪️' },
-  TURN_LEFT: { label: 'Sola', color: '#EC4899', icon: '↩️' },
-  REPEAT: { label: '3x Döngü', color: '#F59E0B', icon: '🔁' },
+const BLOCK_CONFIG: Record<
+  CommandType,
+  { label: string; color: string; shadowColor: string; icon: string }
+> = {
+  FORWARD: { label: 'İleri', color: '#3B82F6', shadowColor: '#1D4ED8', icon: '⬆️' },
+  TURN_RIGHT: { label: 'Sağa', color: '#8B5CF6', shadowColor: '#6D28D9', icon: '↪️' },
+  TURN_LEFT: { label: 'Sola', color: '#EC4899', shadowColor: '#BE185D', icon: '↩️' },
+  REPEAT: { label: '3x Döngü', color: '#F59E0B', shadowColor: '#B45309', icon: '🔁' },
 };
 
 export const Workspace = () => {
@@ -40,39 +43,64 @@ export const Workspace = () => {
 
     if (block.type === 'REPEAT') {
       return (
-        <View key={block.id} style={[styles.repeatContainer, isActive && styles.activeContainer]}>
+        <View
+          key={block.id}
+          style={[styles.repeatCard, isActive && styles.activeContainer]}
+        >
           <View style={styles.repeatHeader}>
-            <Text style={styles.repeatHeaderText}>🔁 3 Kez Tekrarla:</Text>
-            <TouchableOpacity onPress={() => removeBlock(block.id)}>
+            <Text style={styles.repeatHeaderText}>🔁 3x Tekrarla</Text>
+            <TouchableOpacity
+              onPress={() => removeBlock(block.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Text style={styles.deleteBadge}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          {/* İç bloklar */}
-          <View style={styles.childContainer}>
+          {/* Döngünün İçindeki Komutlar */}
+          <View style={styles.childBlocksArea}>
             {block.children && block.children.length > 0 ? (
-              block.children.map((c, i) => (
-                <TouchableOpacity
-                  key={c.id}
-                  style={[styles.blockTag, { backgroundColor: BLOCK_CONFIG[c.type].color }, activeBlockId === c.id && styles.activeBlockTag]}
-                  onPress={() => removeBlock(c.id)}
-                >
-                  <Text style={styles.blockTagIcon}>{BLOCK_CONFIG[c.type].icon}</Text>
-                  <Text style={styles.blockTagText}>{BLOCK_CONFIG[c.type].label}</Text>
-                </TouchableOpacity>
-              ))
+              block.children.map((child) => {
+                const childConf = BLOCK_CONFIG[child.type];
+                const isChildActive = activeBlockId === child.id;
+
+                return (
+                  <TouchableOpacity
+                    key={child.id}
+                    style={[
+                      styles.childTag,
+                      { backgroundColor: childConf.color, borderBottomColor: childConf.shadowColor },
+                      isChildActive && styles.activeChildTag,
+                    ]}
+                    onPress={() => removeBlock(child.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.blockIconText}>{childConf.icon}</Text>
+                    <Text style={styles.childLabel}>{childConf.label}</Text>
+                    <Text style={styles.childDeleteBadge}>✕</Text>
+                  </TouchableOpacity>
+                );
+              })
             ) : (
-              <Text style={styles.emptyChildText}>Döngüye komut eklemek için aşağıdan + İleri seçin</Text>
+              <Text style={styles.emptyChildText}>Döngüye komut ekle</Text>
             )}
           </View>
 
-          {/* Döngü içine komut ekleme kısayolu */}
-          <TouchableOpacity
-            style={styles.addChildBtn}
-            onPress={() => addChildBlock(block.id, 'FORWARD')}
-          >
-            <Text style={styles.addChildText}>+ İleri Ekle</Text>
-          </TouchableOpacity>
+          {/* Döngü içine komut ekleme butonları */}
+          <View style={styles.addChildRow}>
+            <TouchableOpacity
+              style={[styles.addChildBtn, { backgroundColor: '#3B82F6' }]}
+              onPress={() => addChildBlock(block.id, 'FORWARD')}
+            >
+              <Text style={styles.addChildText}>+ İleri</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.addChildBtn, { backgroundColor: '#8B5CF6' }]}
+              onPress={() => addChildBlock(block.id, 'TURN_RIGHT')}
+            >
+              <Text style={styles.addChildText}>+ Sağa</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       );
     }
@@ -81,30 +109,34 @@ export const Workspace = () => {
       <TouchableOpacity
         key={block.id}
         style={[
-          styles.blockTag,
-          { backgroundColor: conf.color },
+          styles.puzzleBlockTag,
+          { backgroundColor: conf.color, borderBottomColor: conf.shadowColor },
           isActive && styles.activeBlockTag,
         ]}
         onPress={() => removeBlock(block.id)}
         activeOpacity={0.8}
       >
-        <Text style={styles.blockTagIndex}>{index + 1}</Text>
-        <Text style={styles.blockTagIcon}>{conf.icon}</Text>
-        <Text style={styles.blockTagText}>{conf.label}</Text>
+        <Text style={styles.indexBadge}>{index + 1}</Text>
+        <Text style={styles.blockIconText}>{conf.icon}</Text>
+        <Text style={styles.blockLabel}>{conf.label}</Text>
         <Text style={styles.deleteBadge}>✕</Text>
+        <View style={[styles.puzzleNub, { backgroundColor: conf.color }]} />
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Sürükle-Bırak Kod Dizilim Alanı */}
+      {/* Sürükle-Bırak Kod Dizilim Alanı (Drop Zone) */}
       <View
         ref={dropZoneRef}
         onLayout={onDropZoneLayout}
-        style={[styles.sequenceArea, dropZoneLayout ? styles.dropZoneActive : null]}
+        style={[styles.dropZone, dropZoneLayout ? styles.dropZoneReady : null]}
       >
-        <Text style={styles.sectionTitle}>Kod Dizilimi ({workspaceBlocks.length})</Text>
+        <View style={styles.headerRow}>
+          <Text style={styles.sectionTitle}>KOD DİZİLİMİ ({workspaceBlocks.length})</Text>
+          <Text style={styles.hintText}>Dokunarak veya sürükleyerek ekleyin</Text>
+        </View>
 
         <ScrollView
           horizontal
@@ -112,19 +144,19 @@ export const Workspace = () => {
           contentContainerStyle={styles.sequenceList}
         >
           {workspaceBlocks.length === 0 ? (
-            <View style={styles.placeholderContainer}>
-              <Text style={styles.emptyText}>Blokları bu alana sürükleyip bırakın...</Text>
+            <View style={styles.emptyContainer}>
+              <Text style={styles.emptyText}>Komutları buraya sürükleyip bırakın...</Text>
             </View>
           ) : (
-            workspaceBlocks.map((b, i) => renderBlockItem(b, i))
+            workspaceBlocks.map((block, idx) => renderBlockItem(block, idx))
           )}
         </ScrollView>
       </View>
 
-      {/* Komut Paleti */}
-      <View style={styles.paletteContainer}>
-        <Text style={styles.paletteTitle}>Komut Blokları</Text>
-        <View style={styles.palette}>
+      {/* Komut Blokları Paleti */}
+      <View style={styles.paletteSection}>
+        <Text style={styles.paletteTitle}>KOMUT BLOKLARI</Text>
+        <View style={styles.paletteRow}>
           {(['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'] as CommandType[]).map((type) => {
             const conf = BLOCK_CONFIG[type];
             return (
@@ -133,6 +165,7 @@ export const Workspace = () => {
                 type={type}
                 label={conf.label}
                 color={conf.color}
+                shadowColor={conf.shadowColor}
                 icon={conf.icon}
                 dropZoneLayout={dropZoneLayout}
                 onDropSuccess={addBlock}
@@ -147,90 +180,116 @@ export const Workspace = () => {
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 10,
-    gap: 10,
+    gap: 12,
+  },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   sectionTitle: {
     fontSize: 11,
     fontWeight: '800',
     color: '#64748B',
-    textTransform: 'uppercase',
-    marginBottom: 6,
+    letterSpacing: 0.8,
   },
-  sequenceArea: {
+  hintText: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#94A3B8',
+  },
+  dropZone: {
     backgroundColor: '#FFFFFF',
-    borderRadius: 14,
-    padding: 10,
+    borderRadius: 18,
+    padding: 12,
     minHeight: 110,
     borderWidth: 2,
     borderColor: '#E2E8F0',
     borderStyle: 'dashed',
     justifyContent: 'center',
   },
-  dropZoneActive: {
-    borderColor: '#6366F1',
+  dropZoneReady: {
+    borderColor: '#818CF8',
+    backgroundColor: '#F8FAFC',
   },
-  placeholderContainer: {
+  emptyContainer: {
     paddingVertical: 14,
     alignItems: 'center',
     justifyContent: 'center',
     width: '100%',
   },
-  sequenceList: {
-    alignItems: 'center',
-    gap: 8,
-  },
   emptyText: {
     color: '#94A3B8',
     fontSize: 12,
+    fontWeight: '600',
     fontStyle: 'italic',
   },
-  blockTag: {
+  sequenceList: {
+    alignItems: 'center',
+    gap: 8,
+    paddingRight: 10,
+  },
+  puzzleBlockTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 7,
-    borderRadius: 8,
-    gap: 5,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    borderRadius: 12,
+    borderBottomWidth: 3,
+    gap: 6,
+    position: 'relative',
   },
   activeBlockTag: {
     transform: [{ scale: 1.08 }],
-    borderWidth: 2,
     borderColor: '#FACC15',
+    borderWidth: 2,
   },
-  blockTagIndex: {
+  indexBadge: {
     color: '#FFFFFF',
     fontWeight: '800',
     fontSize: 11,
-    opacity: 0.8,
+    opacity: 0.75,
   },
-  blockTagIcon: {
-    fontSize: 13,
+  blockIconText: {
+    fontSize: 14,
   },
-  blockTagText: {
+  blockLabel: {
     color: '#FFFFFF',
-    fontWeight: '700',
-    fontSize: 12,
+    fontWeight: '800',
+    fontSize: 13,
   },
   deleteBadge: {
     color: '#FFFFFF',
     fontSize: 11,
-    fontWeight: '800',
-    marginLeft: 3,
+    fontWeight: '900',
+    marginLeft: 4,
+    opacity: 0.75,
+  },
+  puzzleNub: {
+    position: 'absolute',
+    right: -4,
+    top: '38%',
+    width: 5,
+    height: 10,
+    borderTopRightRadius: 3,
+    borderBottomRightRadius: 3,
     opacity: 0.7,
   },
-  repeatContainer: {
+  repeatCard: {
     backgroundColor: '#FEF3C7',
-    borderWidth: 1.5,
+    borderWidth: 2,
     borderColor: '#F59E0B',
-    borderRadius: 10,
+    borderBottomWidth: 4,
+    borderBottomColor: '#D97706',
+    borderRadius: 14,
     padding: 8,
-    minWidth: 140,
+    minWidth: 150,
     gap: 6,
   },
   activeContainer: {
-    borderColor: '#D97706',
-    borderWidth: 2,
+    borderColor: '#B45309',
+    transform: [{ scale: 1.04 }],
   },
   repeatHeader: {
     flexDirection: 'row',
@@ -242,39 +301,70 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#92400E',
   },
-  childContainer: {
+  childBlocksArea: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: 4,
+  },
+  childTag: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderBottomWidth: 2,
+    gap: 4,
+  },
+  activeChildTag: {
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
+  childLabel: {
+    color: '#FFFFFF',
+    fontWeight: '700',
+    fontSize: 11,
+  },
+  childDeleteBadge: {
+    color: '#FFFFFF',
+    fontSize: 9,
+    fontWeight: '900',
+    marginLeft: 2,
+    opacity: 0.8,
   },
   emptyChildText: {
     fontSize: 10,
     color: '#B45309',
     fontStyle: 'italic',
+    paddingVertical: 2,
+  },
+  addChildRow: {
+    flexDirection: 'row',
+    gap: 4,
   },
   addChildBtn: {
-    backgroundColor: '#FDE68A',
+    flex: 1,
     paddingVertical: 4,
-    paddingHorizontal: 8,
     borderRadius: 6,
     alignItems: 'center',
   },
   addChildText: {
+    color: '#FFFFFF',
     fontSize: 10,
-    fontWeight: '700',
-    color: '#78350F',
+    fontWeight: '800',
   },
-  paletteContainer: {
+  paletteSection: {
     gap: 6,
   },
   paletteTitle: {
     fontSize: 11,
-    fontWeight: '700',
+    fontWeight: '800',
     color: '#64748B',
-    textTransform: 'uppercase',
+    letterSpacing: 0.8,
   },
-  palette: {
+  paletteRow: {
     flexDirection: 'row',
-    gap: 6,
+    justifyContent: 'space-between',
+    gap: 8,
+    zIndex: 100,
   },
 });
