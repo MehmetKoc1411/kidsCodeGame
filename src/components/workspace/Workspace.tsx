@@ -1,5 +1,5 @@
 import React, { useRef, useState } from 'react';
-import { View, Text, TouchableOpacity, ScrollView, StyleSheet } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useGameStore } from '../../store/useGameStore';
 import { CommandType, CodeBlock } from '../../core/types';
 import { DraggableBlock } from './DraggableBlock';
@@ -57,7 +57,7 @@ export const Workspace = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Döngünün İçindeki Komutlar */}
+          {/* Döngü İçi Komutlar */}
           <View style={styles.childBlocksArea}>
             {block.children && block.children.length > 0 ? (
               block.children.map((child) => {
@@ -82,11 +82,11 @@ export const Workspace = () => {
                 );
               })
             ) : (
-              <Text style={styles.emptyChildText}>Döngüye komut ekle</Text>
+              <Text style={styles.emptyChildText}>Döngüye komut ekleyin</Text>
             )}
           </View>
 
-          {/* Döngü içine komut ekleme butonları */}
+          {/* Döngüye Hızlı Komut Ekleme Butonları */}
           <View style={styles.addChildRow}>
             <TouchableOpacity
               style={[styles.addChildBtn, { backgroundColor: '#3B82F6' }]}
@@ -127,7 +127,7 @@ export const Workspace = () => {
 
   return (
     <View style={styles.container}>
-      {/* Sürükle-Bırak Kod Dizilim Alanı (Drop Zone) */}
+      {/* Kod Dizilim Alanı (Drop Zone) */}
       <View
         ref={dropZoneRef}
         onLayout={onDropZoneLayout}
@@ -135,14 +135,11 @@ export const Workspace = () => {
       >
         <View style={styles.headerRow}>
           <Text style={styles.sectionTitle}>KOD DİZİLİMİ ({workspaceBlocks.length})</Text>
-          <Text style={styles.hintText}>Dokunarak veya sürükleyerek ekleyin</Text>
+          <Text style={styles.hintText}>Sürükleyin veya dokunun</Text>
         </View>
 
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.sequenceList}
-        >
+        {/* Ekrana sığarak alt alta geçen sarıcı yapı */}
+        <View style={styles.sequenceWrapContainer}>
           {workspaceBlocks.length === 0 ? (
             <View style={styles.emptyContainer}>
               <Text style={styles.emptyText}>Komutları buraya sürükleyip bırakın...</Text>
@@ -150,7 +147,7 @@ export const Workspace = () => {
           ) : (
             workspaceBlocks.map((block, idx) => renderBlockItem(block, idx))
           )}
-        </ScrollView>
+        </View>
       </View>
 
       {/* Komut Blokları Paleti */}
@@ -186,7 +183,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 8,
+    marginBottom: 6,
   },
   sectionTitle: {
     fontSize: 11,
@@ -202,7 +199,7 @@ const styles = StyleSheet.create({
   dropZone: {
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
-    padding: 12,
+    padding: 10,
     minHeight: 110,
     borderWidth: 2,
     borderColor: '#E2E8F0',
@@ -212,6 +209,13 @@ const styles = StyleSheet.create({
   dropZoneReady: {
     borderColor: '#818CF8',
     backgroundColor: '#F8FAFC',
+  },
+  sequenceWrapContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    alignItems: 'center',
+    gap: 6,
+    paddingVertical: 4,
   },
   emptyContainer: {
     paddingVertical: 14,
@@ -225,71 +229,66 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     fontStyle: 'italic',
   },
-  sequenceList: {
-    alignItems: 'center',
-    gap: 8,
-    paddingRight: 10,
-  },
   puzzleBlockTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 12,
-    paddingVertical: 9,
-    borderRadius: 12,
+    paddingHorizontal: 8,
+    paddingVertical: 6,
+    borderRadius: 10,
     borderBottomWidth: 3,
-    gap: 6,
+    gap: 5,
     position: 'relative',
   },
   activeBlockTag: {
-    transform: [{ scale: 1.08 }],
+    transform: [{ scale: 1.05 }],
     borderColor: '#FACC15',
     borderWidth: 2,
   },
   indexBadge: {
     color: '#FFFFFF',
     fontWeight: '800',
-    fontSize: 11,
+    fontSize: 10,
     opacity: 0.75,
   },
   blockIconText: {
-    fontSize: 14,
+    fontSize: 12,
   },
   blockLabel: {
     color: '#FFFFFF',
     fontWeight: '800',
-    fontSize: 13,
+    fontSize: 11,
   },
   deleteBadge: {
     color: '#FFFFFF',
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '900',
-    marginLeft: 4,
+    marginLeft: 3,
     opacity: 0.75,
   },
   puzzleNub: {
     position: 'absolute',
-    right: -4,
-    top: '38%',
-    width: 5,
-    height: 10,
-    borderTopRightRadius: 3,
-    borderBottomRightRadius: 3,
+    right: -3,
+    top: '36%',
+    width: 4,
+    height: 8,
+    borderTopRightRadius: 2,
+    borderBottomRightRadius: 2,
     opacity: 0.7,
   },
   repeatCard: {
     backgroundColor: '#FEF3C7',
-    borderWidth: 2,
+    borderWidth: 1.5,
     borderColor: '#F59E0B',
-    borderBottomWidth: 4,
+    borderBottomWidth: 3,
     borderBottomColor: '#D97706',
-    borderRadius: 14,
-    padding: 8,
-    minWidth: 150,
-    gap: 6,
+    borderRadius: 12,
+    padding: 6,
+    minWidth: 140,
+    gap: 4,
   },
   activeContainer: {
     borderColor: '#B45309',
-    transform: [{ scale: 1.04 }],
+    transform: [{ scale: 1.03 }],
   },
   repeatHeader: {
     flexDirection: 'row',
@@ -297,7 +296,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   repeatHeaderText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: '#92400E',
   },
@@ -309,11 +308,11 @@ const styles = StyleSheet.create({
   childTag: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingVertical: 5,
-    borderRadius: 8,
+    paddingHorizontal: 6,
+    paddingVertical: 4,
+    borderRadius: 6,
     borderBottomWidth: 2,
-    gap: 4,
+    gap: 3,
   },
   activeChildTag: {
     borderWidth: 1.5,
@@ -322,17 +321,17 @@ const styles = StyleSheet.create({
   childLabel: {
     color: '#FFFFFF',
     fontWeight: '700',
-    fontSize: 11,
+    fontSize: 10,
   },
   childDeleteBadge: {
     color: '#FFFFFF',
-    fontSize: 9,
+    fontSize: 8,
     fontWeight: '900',
     marginLeft: 2,
     opacity: 0.8,
   },
   emptyChildText: {
-    fontSize: 10,
+    fontSize: 9,
     color: '#B45309',
     fontStyle: 'italic',
     paddingVertical: 2,
@@ -343,13 +342,13 @@ const styles = StyleSheet.create({
   },
   addChildBtn: {
     flex: 1,
-    paddingVertical: 4,
-    borderRadius: 6,
+    paddingVertical: 3,
+    borderRadius: 5,
     alignItems: 'center',
   },
   addChildText: {
     color: '#FFFFFF',
-    fontSize: 10,
+    fontSize: 9,
     fontWeight: '800',
   },
   paletteSection: {
