@@ -1,6 +1,7 @@
 import { LevelConfig } from './types';
 
 export const LEVELS: LevelConfig[] = [
+  // --- Kolay & Giriş Seviyeleri (1 - 6) ---
   {
     id: 1,
     title: 'Düz İlerle',
@@ -79,6 +80,8 @@ export const LEVELS: LevelConfig[] = [
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'REPEAT'],
     maxBlocks: 7,
   },
+
+  // --- İleri Başlangıç & Döngü Giriş (7 - 10) ---
   {
     id: 7,
     title: 'Spiral Girdap',
@@ -127,23 +130,167 @@ export const LEVELS: LevelConfig[] = [
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
     maxBlocks: 10,
   },
-{
+  {
     id: 10,
     title: 'Büyük Final: Kod Ustası',
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 4, direction: 'UP' },
     target: { x: 4, y: 0 },
-    // Geçitleri açık, S şeklinde rota sunan duvar dizilimi:
     walls: [
-      { x: 1, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 1 }, // Sol bariyer (alt ve üstten geçit açık)
-      { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 }, // Sağ bariyer (orta ve köşelerden dolanılabilir)
+      { x: 1, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 1 },
+      { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 },
     ],
     stars: [
-      { x: 0, y: 0 }, // Sol üst yıldız
-      { x: 2, y: 2 }, // Merkez gizli yıldız
-      { x: 4, y: 4 }, // Sağ alt köşe yıldızı
+      { x: 0, y: 0 },
+      { x: 2, y: 2 },
+      { x: 4, y: 4 },
     ],
+    availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT', 'IF_WALL'],
+    maxBlocks: 12,
+  },
+
+  // --- Yeni Orta Seviye Haritalar (11 - 20) ---
+  {
+    id: 11,
+    title: 'Çift Kapı Labirenti',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 0, direction: 'RIGHT' },
+    target: { x: 4, y: 4 },
+    walls: [
+      { x: 2, y: 0 }, { x: 2, y: 1 }, // Üst kapı geçidi y=2'de açık
+      { x: 2, y: 3 }, { x: 2, y: 4 },
+    ],
+    stars: [{ x: 2, y: 2 }, { x: 0, y: 4 }, { x: 4, y: 0 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 8,
+  },
+  {
+    id: 12,
+    title: 'Engel Algılayıcı (IF Testi)',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 2, direction: 'RIGHT' },
+    target: { x: 4, y: 2 },
+    walls: [
+      { x: 2, y: 2 }, // Tam ortada tek blokluk engel
+    ],
+    stars: [{ x: 1, y: 2 }, { x: 2, y: 1 }, { x: 3, y: 2 }],
+    availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'IF_WALL'],
+    maxBlocks: 7,
+  },
+  {
+    id: 13,
+    title: 'Sonsuzluk Simgesi',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 2, y: 2, direction: 'UP' },
+    target: { x: 2, y: 2 },
+    walls: [
+      { x: 1, y: 1 }, { x: 3, y: 3 },
+    ],
+    stars: [{ x: 2, y: 0 }, { x: 0, y: 2 }, { x: 4, y: 2 }, { x: 2, y: 4 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 10,
+  },
+  {
+    id: 14,
+    title: 'Yılan Patikası',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 4, direction: 'RIGHT' },
+    target: { x: 4, y: 0 },
+    walls: [
+      { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 },
+      { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 },
+    ],
+    stars: [{ x: 4, y: 4 }, { x: 0, y: 2 }, { x: 4, y: 2 }, { x: 0, y: 0 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
+    maxBlocks: 12,
+  },
+  {
+    id: 15,
+    title: 'Köprüden Geçiş',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 2, direction: 'RIGHT' },
+    target: { x: 4, y: 2 },
+    walls: [
+      { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 4 },
+      { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 3 }, { x: 3, y: 4 },
+    ],
+    stars: [{ x: 2, y: 1 }, { x: 2, y: 3 }],
+    availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
+    maxBlocks: 6,
+  },
+  {
+    id: 16,
+    title: 'Piramit Tırmanışı',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 4, direction: 'RIGHT' },
+    target: { x: 2, y: 0 },
+    walls: [
+      { x: 1, y: 4 }, { x: 3, y: 4 },
+      { x: 0, y: 2 }, { x: 4, y: 2 },
+      { x: 1, y: 1 }, { x: 3, y: 1 },
+    ],
+    stars: [{ x: 2, y: 4 }, { x: 2, y: 2 }],
+    availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
+    maxBlocks: 10,
+  },
+  {
+    id: 17,
+    title: 'Çapraz Koridor',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 0, direction: 'RIGHT' },
+    target: { x: 4, y: 4 },
+    walls: [
+      { x: 1, y: 0 }, { x: 2, y: 1 }, { x: 3, y: 2 },
+      { x: 0, y: 2 }, { x: 1, y: 3 }, { x: 2, y: 4 },
+    ],
+    stars: [{ x: 0, y: 4 }, { x: 4, y: 0 }, { x: 2, y: 2 }],
+    availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT', 'IF_WALL'],
+    maxBlocks: 11,
+  },
+  {
+    id: 18,
+    title: 'Ada Turu',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 2, direction: 'UP' },
+    target: { x: 4, y: 2 },
+    walls: [
+      { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 },
+    ],
+    stars: [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 4, y: 0 }, { x: 2, y: 4 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 9,
+  },
+  {
+    id: 19,
+    title: 'Labirent Odaları',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 0, direction: 'RIGHT' },
+    target: { x: 4, y: 4 },
+    walls: [
+      { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 3 }, { x: 2, y: 4 },
+      { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 },
+    ],
+    stars: [{ x: 0, y: 4 }, { x: 4, y: 0 }],
+    availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
+    maxBlocks: 10,
+  },
+  {
+    id: 20,
+    title: 'Grand Master: Son Meydan Okuma',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 4, direction: 'UP' },
+    target: { x: 4, y: 0 },
+    walls: [
+      { x: 0, y: 2 }, { x: 1, y: 2 },
+      { x: 3, y: 2 }, { x: 4, y: 2 },
+      { x: 2, y: 0 }, { x: 2, y: 4 },
+    ],
+    stars: [
+      { x: 0, y: 0 },
+      { x: 2, y: 2 },
+      { x: 4, y: 4 },
+    ],
+    availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT', 'IF_WALL'],
     maxBlocks: 14,
   },
 ];
