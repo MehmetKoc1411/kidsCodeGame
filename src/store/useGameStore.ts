@@ -1,10 +1,14 @@
 import { create } from 'zustand';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CodeBlock, CommandType, Direction, GameStatus, Position } from '../core/types';
 import { LEVELS } from '../core/levels';
 import { sounds } from '../core/soundManager';
 
+const STORAGE_KEY = '@kids_code_completed_levels';
+
 interface GameState {
   currentLevelIndex: number;
+  completedLevels: number[];
   character: Position & { direction: Direction };
   collectedStars: Position[];
   workspaceBlocks: CodeBlock[];
@@ -19,16 +23,15 @@ interface GameState {
   resetGame: () => void;
   nextLevel: () => void;
   runCode: () => Promise<void>;
+  loadProgress: () => Promise<void>;
 }
 
-// Yön Hesaplama Yardımcısı (90 derece sağa / sola dönüş)
 const getNextDirection = (current: Direction, turn: 'LEFT' | 'RIGHT'): Direction => {
   const directions: Direction[] = ['UP', 'RIGHT', 'DOWN', 'LEFT'];
   const index = directions.indexOf(current);
   return turn === 'RIGHT' ? directions[(index + 1) % 4] : directions[(index + 3) % 4];
 };
 
-// Bir Sonraki Koordinatı Hesaplama Yardımcısı
 const getNextPosition = (pos: Position, dir: Direction): Position => {
   switch (dir) {
     case 'UP': return { x: pos.x, y: pos.y - 1 };
@@ -43,13 +46,25 @@ export const useGameStore = create<GameState>((set, get) => {
 
   return {
     currentLevelIndex: 0,
+    completedLevels: [1],
     character: { ...initialLevel.start },
     collectedStars: [],
     workspaceBlocks: [],
     activeBlockId: null,
     status: 'IDLE',
 
-    // Ana çalışma alanına yeni blok ekleme
+    loadProgress: async () => {
+      try {
+        const saved = await AsyncStorage.getItem(STORAGE_KEY);
+        if (saved) {
+          const parsed = JSON.parse(saved);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            set({ completedLevels: parsed });
+          }
+        }
+      } catch {}
+    },
+
     addBlock: (type) => {
       const newBlock: CodeBlock = {
         id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
@@ -60,7 +75,6 @@ export const useGameStore = create<GameState>((set, get) => {
       set((state) => ({ workspaceBlocks: [...state.workspaceBlocks, newBlock] }));
     },
 
-    // Döngü bloğu (REPEAT) içine alt komut ekleme
     addChildBlock: (parentId, type) => {
       const newChild: CodeBlock = {
         id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
@@ -75,7 +89,6 @@ export const useGameStore = create<GameState>((set, get) => {
       }));
     },
 
-    // Blok veya alt bloğu kimliğe göre silme
     removeBlock: (id) => {
       set((state) => ({
         workspaceBlocks: state.workspaceBlocks
@@ -86,12 +99,10 @@ export const useGameStore = create<GameState>((set, get) => {
       }));
     },
 
-    // Çalışma alanını tamamen temizleme
     clearWorkspace: () => {
       set({ workspaceBlocks: [] });
     },
 
-    // Karakteri ve durumu mevcut bölümün başlangıcına alma
     resetGame: () => {
       const currentLevel = LEVELS[get().currentLevelIndex];
       set({
@@ -102,12 +113,17 @@ export const useGameStore = create<GameState>((set, get) => {
       });
     },
 
-    // Bir sonraki bölüme geçiş
     nextLevel: () => {
       const nextIdx = (get().currentLevelIndex + 1) % LEVELS.length;
       const nextLevel = LEVELS[nextIdx];
+      const nextId = nextLevel.id;
+
+      const updatedCompleted = Array.from(new Set([...get().completedLevels, nextId]));
+      AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCompleted)).catch(() => {});
+
       set({
         currentLevelIndex: nextIdx,
+        completedLevels: updatedCompleted,
         character: { ...nextLevel.start },
         collectedStars: [],
         workspaceBlocks: [],
@@ -116,7 +132,6 @@ export const useGameStore = create<GameState>((set, get) => {
       });
     },
 
-    // Yürütme Motoru (Execution Engine)
     runCode: async () => {
       const { workspaceBlocks, currentLevelIndex, resetGame } = get();
       if (workspaceBlocks.length === 0) return;
@@ -128,7 +143,6 @@ export const useGameStore = create<GameState>((set, get) => {
       let currentPos = { ...level.start };
       let starsCollected: Position[] = [];
 
-      // AST Flattening (Döngü bloklarını ve iç içe komutları sıraya dökme)
       const queue: { id: string; type: CommandType }[] = [];
       const parseBlock = (block: CodeBlock) => {
         if (block.type === 'REPEAT' && block.children) {
@@ -145,7 +159,6 @@ export const useGameStore = create<GameState>((set, get) => {
 
       workspaceBlocks.forEach(parseBlock);
 
-      // Adım adım yürütme döngüsü
       for (const cmd of queue) {
         set({ activeBlockId: cmd.id });
 
@@ -158,12 +171,10 @@ export const useGameStore = create<GameState>((set, get) => {
         } else if (cmd.type === 'FORWARD') {
           const next = getNextPosition(currentPos, currentPos.direction);
 
-          // Sınır dışı kontrolü
           const isOutOfBounds =
             next.x < 0 || next.x >= level.gridSize.cols ||
             next.y < 0 || next.y >= level.gridSize.rows;
 
-          // Engel (Duvar) çarpışma kontrolü
           const isHitWall = level.walls.some((w) => w.x === next.x && w.y === next.y);
 
           if (isOutOfBounds || isHitWall) {
@@ -176,7 +187,6 @@ export const useGameStore = create<GameState>((set, get) => {
           currentPos.y = next.y;
           sounds.play('STEP');
 
-          // Yıldız toplama kontrolü
           const starHit = level.stars.find(
             (s) => s.x === next.x && s.y === next.y && !starsCollected.some((c) => c.x === s.x && c.y === s.y)
           );
@@ -191,13 +201,11 @@ export const useGameStore = create<GameState>((set, get) => {
           collectedStars: [...starsCollected],
         });
 
-        // Adım aralığı gecikmesi (Animasyonun rahat izlenmesi için 400ms)
         await new Promise((res) => setTimeout(res, 400));
       }
 
       set({ activeBlockId: null });
 
-      // Hedefe varış kontrolü
       if (currentPos.x === level.target.x && currentPos.y === level.target.y) {
         sounds.play('WIN');
         set({ status: 'SUCCESS' });

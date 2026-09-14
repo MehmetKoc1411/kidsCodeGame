@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
@@ -11,8 +11,13 @@ import { LEVELS } from './src/core/levels';
 
 export default function App() {
   const currentLevelIndex = useGameStore((s) => s.currentLevelIndex);
-  const resetGame = useGameStore((s) => s.resetGame);
+  const completedLevels = useGameStore((s) => s.completedLevels);
+  const loadProgress = useGameStore((s) => s.loadProgress);
   const currentLevel = LEVELS[currentLevelIndex] || LEVELS[0];
+
+  useEffect(() => {
+    loadProgress();
+  }, []);
 
   return (
     <GestureHandlerRootView style={styles.container}>
@@ -23,12 +28,12 @@ export default function App() {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* Üst Başlık ve Bölüm Seçimi */}
+            {/* Üst Başlık ve Bölüm Seçici */}
             <View style={styles.header}>
               <Text style={styles.levelBadge}>BÖLÜM {currentLevel.id}</Text>
               <Text style={styles.levelTitle}>{currentLevel.title}</Text>
 
-              {/* Bölüm Butonları */}
+              {/* Bölüm Butonları Barı */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -36,12 +41,15 @@ export default function App() {
               >
                 {LEVELS.map((lvl, index) => {
                   const isSelected = index === currentLevelIndex;
+                  const isCompleted = completedLevels.includes(lvl.id);
+
                   return (
                     <TouchableOpacity
                       key={lvl.id}
                       style={[
                         styles.levelDot,
                         isSelected && styles.levelDotActive,
+                        isCompleted && !isSelected && styles.levelDotCompleted,
                       ]}
                       onPress={() => {
                         useGameStore.setState({
@@ -58,9 +66,10 @@ export default function App() {
                         style={[
                           styles.levelDotText,
                           isSelected && styles.levelDotTextActive,
+                          isCompleted && !isSelected && styles.levelDotTextCompleted,
                         ]}
                       >
-                        #{lvl.id}
+                        {isCompleted && !isSelected ? `✓ #${lvl.id}` : `#${lvl.id}`}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -68,23 +77,23 @@ export default function App() {
               </ScrollView>
             </View>
 
-            {/* 5x5 Izgara Alanı */}
+            {/* 5x5 Izgara */}
             <View style={styles.gridSection}>
               <GameGrid />
             </View>
 
-            {/* Sürükle-Bırak Çalışma Alanı ve Bloklar */}
+            {/* Çalışma Alanı ve Komut Paleti */}
             <View style={styles.workspaceSection}>
               <Workspace />
             </View>
 
-            {/* Oynat / Sıfırla Kontrolleri */}
+            {/* Oynat / Yenile / Sil Kontrolleri */}
             <View style={styles.controlsSection}>
               <PlayControls />
             </View>
           </ScrollView>
 
-          {/* Başarı Modalı */}
+          {/* Zafer Modalı */}
           <VictoryModal />
         </SafeAreaView>
       </SafeAreaProvider>
@@ -102,34 +111,34 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 12,
-    paddingBottom: 28,
+    paddingTop: 8,
+    paddingBottom: 24,
   },
   header: {
     alignItems: 'center',
-    marginBottom: 14,
+    marginBottom: 10,
   },
   levelBadge: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '800',
     color: '#6366F1',
     letterSpacing: 1.2,
   },
   levelTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: '800',
     color: '#0F172A',
     marginTop: 2,
-    marginBottom: 10,
+    marginBottom: 8,
   },
   levelSelector: {
     flexDirection: 'row',
     gap: 8,
-    paddingVertical: 4,
+    paddingVertical: 2,
   },
   levelDot: {
-    width: 44,
-    height: 38,
+    paddingHorizontal: 12,
+    height: 36,
     borderRadius: 12,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
@@ -141,8 +150,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#4F46E5',
     borderColor: '#4F46E5',
   },
+  levelDotCompleted: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#10B981',
+  },
   levelDotText: {
-    fontSize: 13,
+    fontSize: 12,
     fontWeight: '700',
     color: '#64748B',
   },
@@ -150,15 +163,19 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     fontWeight: '800',
   },
+  levelDotTextCompleted: {
+    color: '#059669',
+    fontWeight: '800',
+  },
   gridSection: {
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 6,
+    marginVertical: 4,
   },
   workspaceSection: {
-    marginTop: 8,
+    marginTop: 6,
   },
   controlsSection: {
-    marginTop: 10,
+    marginTop: 8,
   },
 });
