@@ -3,8 +3,11 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { CodeBlock, CommandType, Direction, GameStatus, Position } from '../core/types';
 import { LEVELS } from '../core/levels';
 import { sounds } from '../core/soundManager';
+import { haptics } from '../core/hapticManager';
+import { Language } from '../core/translations';
 
 const STORAGE_KEY = '@kids_code_completed_levels';
+const LANG_STORAGE_KEY = '@kids_code_language';
 
 interface GameState {
   currentLevelIndex: number;
@@ -15,7 +18,10 @@ interface GameState {
   activeBlockId: string | null;
   status: GameStatus;
   earnedScoreStars: number;
+  language: Language;
 
+  // Eylemler
+  setLanguage: (lang: Language) => void;
   addBlock: (type: CommandType) => void;
   addChildBlock: (parentId: string, type: CommandType) => void;
   removeBlock: (id: string) => void;
@@ -53,20 +59,35 @@ export const useGameStore = create<GameState>((set, get) => {
     activeBlockId: null,
     status: 'IDLE',
     earnedScoreStars: 3,
+    language: 'tr',
+
+    setLanguage: (lang) => {
+      set({ language: lang });
+      AsyncStorage.setItem(LANG_STORAGE_KEY, lang).catch(() => {});
+    },
 
     loadProgress: async () => {
       try {
-        const saved = await AsyncStorage.getItem(STORAGE_KEY);
-        if (saved) {
-          const parsed = JSON.parse(saved);
+        const [savedLevels, savedLang] = await Promise.all([
+          AsyncStorage.getItem(STORAGE_KEY),
+          AsyncStorage.getItem(LANG_STORAGE_KEY),
+        ]);
+
+        if (savedLevels) {
+          const parsed = JSON.parse(savedLevels);
           if (Array.isArray(parsed) && parsed.length > 0) {
             set({ completedLevels: parsed });
           }
+        }
+
+        if (savedLang === 'tr' || savedLang === 'en') {
+          set({ language: savedLang });
         }
       } catch {}
     },
 
     addBlock: (type) => {
+      haptics.triggerDrop();
       const isContainer = type === 'REPEAT' || type === 'IF_WALL';
       const newBlock: CodeBlock = {
         id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
@@ -78,6 +99,7 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     addChildBlock: (parentId, type) => {
+      haptics.triggerDrop();
       const newChild: CodeBlock = {
         id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
         type,
@@ -92,6 +114,7 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     removeBlock: (id) => {
+      haptics.triggerDrop();
       set((state) => ({
         workspaceBlocks: state.workspaceBlocks
           .filter((b) => b.id !== id)
@@ -102,6 +125,7 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     clearWorkspace: () => {
+      haptics.triggerDrop();
       set({ workspaceBlocks: [] });
     },
 
@@ -145,7 +169,6 @@ export const useGameStore = create<GameState>((set, get) => {
       let currentPos = { ...level.start };
       let starsCollected: Position[] = [];
 
-      // Komutları ve Koşulları Yürütme Yardımcısı
       const executeBlock = async (block: CodeBlock): Promise<boolean> => {
         set({ activeBlockId: block.id });
 
@@ -179,7 +202,7 @@ export const useGameStore = create<GameState>((set, get) => {
         if (block.type === 'TURN_LEFT' || block.type === 'TURN_RIGHT') {
           currentPos.direction = getNextDirection(
             currentPos.direction,
-            cmdToTurn(block.type)
+            block.type === 'TURN_RIGHT' ? 'RIGHT' : 'LEFT'
           );
           sounds.play('STEP');
         } else if (block.type === 'FORWARD') {
@@ -193,6 +216,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
           if (isOutOfBounds || isHitWall) {
             sounds.play('FAIL');
+            haptics.triggerError();
             set({ status: 'FAILED', activeBlockId: null });
             return false;
           }
@@ -207,6 +231,7 @@ export const useGameStore = create<GameState>((set, get) => {
           if (starHit) {
             starsCollected = [...starsCollected, starHit];
             sounds.play('STAR');
+            haptics.triggerStar();
           }
         }
 
@@ -219,9 +244,6 @@ export const useGameStore = create<GameState>((set, get) => {
         return true;
       };
 
-      const cmdToTurn = (type: CommandType): 'LEFT' | 'RIGHT' =>
-        type === 'TURN_RIGHT' ? 'RIGHT' : 'LEFT';
-
       for (const block of workspaceBlocks) {
         const ok = await executeBlock(block);
         if (!ok) return;
@@ -231,8 +253,8 @@ export const useGameStore = create<GameState>((set, get) => {
 
       if (currentPos.x === level.target.x && currentPos.y === level.target.y) {
         sounds.play('WIN');
+        haptics.triggerSuccess();
 
-        // Blok Optimizasyonuna Göre Yıldız Hesaplama
         let starsWon = 1;
         const collectedAllLevelStars = starsCollected.length >= level.stars.length;
         const usedOptimalBlocks = workspaceBlocks.length <= level.maxBlocks;
@@ -246,6 +268,7 @@ export const useGameStore = create<GameState>((set, get) => {
         set({ status: 'SUCCESS', earnedScoreStars: starsWon });
       } else {
         sounds.play('FAIL');
+        haptics.triggerError();
         set({ status: 'FAILED' });
       }
     },

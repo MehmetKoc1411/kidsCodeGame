@@ -3,24 +3,28 @@ import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useGameStore } from '../../store/useGameStore';
 import { CommandType, CodeBlock } from '../../core/types';
 import { DraggableBlock } from './DraggableBlock';
+import { TRANSLATIONS } from '../../core/translations';
 
-const BLOCK_CONFIG: Record<
+const BLOCK_COLORS: Record<
   CommandType,
-  { label: string; color: string; shadowColor: string; icon: string }
+  { color: string; shadowColor: string; icon: string }
 > = {
-  FORWARD: { label: 'İleri', color: '#3B82F6', shadowColor: '#1D4ED8', icon: '⬆️' },
-  TURN_RIGHT: { label: 'Sağa', color: '#8B5CF6', shadowColor: '#6D28D9', icon: '↪️' },
-  TURN_LEFT: { label: 'Sola', color: '#EC4899', shadowColor: '#BE185D', icon: '↩️' },
-  REPEAT: { label: '3x Döngü', color: '#F59E0B', shadowColor: '#B45309', icon: '🔁' },
-  IF_WALL: { label: 'Engel Varsa', color: '#EF4444', shadowColor: '#B91C1C', icon: '🧱' },
+  FORWARD: { color: '#3B82F6', shadowColor: '#1D4ED8', icon: '⬆️' },
+  TURN_RIGHT: { color: '#8B5CF6', shadowColor: '#6D28D9', icon: '↪️' },
+  TURN_LEFT: { color: '#EC4899', shadowColor: '#BE185D', icon: '↩️' },
+  REPEAT: { color: '#F59E0B', shadowColor: '#B45309', icon: '🔁' },
+  IF_WALL: { color: '#EF4444', shadowColor: '#B91C1C', icon: '🧱' },
 };
 
 export const Workspace = () => {
+  const language = useGameStore((s) => s.language);
   const workspaceBlocks = useGameStore((s) => s.workspaceBlocks);
   const activeBlockId = useGameStore((s) => s.activeBlockId);
   const addBlock = useGameStore((s) => s.addBlock);
   const addChildBlock = useGameStore((s) => s.addChildBlock);
   const removeBlock = useGameStore((s) => s.removeBlock);
+
+  const t = TRANSLATIONS[language];
 
   const dropZoneRef = useRef<View>(null);
   const [dropZoneLayout, setDropZoneLayout] = useState<{
@@ -39,10 +43,10 @@ export const Workspace = () => {
   };
 
   const renderBlockItem = (block: CodeBlock, index: number) => {
-    const conf = BLOCK_CONFIG[block.type];
+    const visual = BLOCK_COLORS[block.type];
+    const label = t.blocks[block.type];
     const isActive = activeBlockId === block.id;
 
-    // Döngü Bloğu (REPEAT)
     if (block.type === 'REPEAT') {
       return (
         <View
@@ -50,7 +54,7 @@ export const Workspace = () => {
           style={[styles.repeatCard, isActive && styles.activeContainer]}
         >
           <View style={styles.repeatHeader}>
-            <Text style={styles.repeatHeaderText}>🔁 3x Tekrarla</Text>
+            <Text style={styles.repeatHeaderText}>🔁 {label}</Text>
             <TouchableOpacity
               onPress={() => removeBlock(block.id)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -62,7 +66,8 @@ export const Workspace = () => {
           <View style={styles.childBlocksArea}>
             {block.children && block.children.length > 0 ? (
               block.children.map((child) => {
-                const childConf = BLOCK_CONFIG[child.type];
+                const childVisual = BLOCK_COLORS[child.type];
+                const childLabel = t.blocks[child.type];
                 const isChildActive = activeBlockId === child.id;
 
                 return (
@@ -70,20 +75,22 @@ export const Workspace = () => {
                     key={child.id}
                     style={[
                       styles.childTag,
-                      { backgroundColor: childConf.color, borderBottomColor: childConf.shadowColor },
+                      { backgroundColor: childVisual.color, borderBottomColor: childVisual.shadowColor },
                       isChildActive && styles.activeChildTag,
                     ]}
                     onPress={() => removeBlock(child.id)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.blockIconText}>{childConf.icon}</Text>
-                    <Text style={styles.childLabel}>{childConf.label}</Text>
+                    <Text style={styles.blockIconText}>{childVisual.icon}</Text>
+                    <Text style={styles.childLabel}>{childLabel}</Text>
                     <Text style={styles.childDeleteBadge}>✕</Text>
                   </TouchableOpacity>
                 );
               })
             ) : (
-              <Text style={styles.emptyChildText}>Döngüye komut ekle</Text>
+              <Text style={styles.emptyChildText}>
+                {language === 'tr' ? 'Komut ekle' : 'Add action'}
+              </Text>
             )}
           </View>
 
@@ -92,20 +99,19 @@ export const Workspace = () => {
               style={[styles.addChildBtn, { backgroundColor: '#3B82F6' }]}
               onPress={() => addChildBlock(block.id, 'FORWARD')}
             >
-              <Text style={styles.addChildText}>+ İleri</Text>
+              <Text style={styles.addChildText}>+ {t.blocks.FORWARD}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.addChildBtn, { backgroundColor: '#8B5CF6' }]}
               onPress={() => addChildBlock(block.id, 'TURN_RIGHT')}
             >
-              <Text style={styles.addChildText}>+ Sağa</Text>
+              <Text style={styles.addChildText}>+ {t.blocks.TURN_RIGHT}</Text>
             </TouchableOpacity>
           </View>
         </View>
       );
     }
 
-    // Koşul Bloğu (IF_WALL)
     if (block.type === 'IF_WALL') {
       return (
         <View
@@ -113,7 +119,7 @@ export const Workspace = () => {
           style={[styles.ifCard, isActive && styles.activeContainer]}
         >
           <View style={styles.ifHeader}>
-            <Text style={styles.ifHeaderText}>🧱 Engel Varsa Yap:</Text>
+            <Text style={styles.ifHeaderText}>🧱 {label}</Text>
             <TouchableOpacity
               onPress={() => removeBlock(block.id)}
               hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
@@ -125,7 +131,8 @@ export const Workspace = () => {
           <View style={styles.childBlocksArea}>
             {block.children && block.children.length > 0 ? (
               block.children.map((child) => {
-                const childConf = BLOCK_CONFIG[child.type];
+                const childVisual = BLOCK_COLORS[child.type];
+                const childLabel = t.blocks[child.type];
                 const isChildActive = activeBlockId === child.id;
 
                 return (
@@ -133,20 +140,22 @@ export const Workspace = () => {
                     key={child.id}
                     style={[
                       styles.childTag,
-                      { backgroundColor: childConf.color, borderBottomColor: childConf.shadowColor },
+                      { backgroundColor: childVisual.color, borderBottomColor: childVisual.shadowColor },
                       isChildActive && styles.activeChildTag,
                     ]}
                     onPress={() => removeBlock(child.id)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.blockIconText}>{childConf.icon}</Text>
-                    <Text style={styles.childLabel}>{childConf.label}</Text>
+                    <Text style={styles.blockIconText}>{childVisual.icon}</Text>
+                    <Text style={styles.childLabel}>{childLabel}</Text>
                     <Text style={styles.childDeleteBadge}>✕</Text>
                   </TouchableOpacity>
                 );
               })
             ) : (
-              <Text style={styles.emptyChildText}>Eylemi ekleyin</Text>
+              <Text style={styles.emptyChildText}>
+                {language === 'tr' ? 'Eylem ekleyin' : 'Add action'}
+              </Text>
             )}
           </View>
 
@@ -155,36 +164,35 @@ export const Workspace = () => {
               style={[styles.addChildBtn, { backgroundColor: '#8B5CF6' }]}
               onPress={() => addChildBlock(block.id, 'TURN_RIGHT')}
             >
-              <Text style={styles.addChildText}>+ Sağa Dön</Text>
+              <Text style={styles.addChildText}>+ {t.blocks.TURN_RIGHT}</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.addChildBtn, { backgroundColor: '#EC4899' }]}
               onPress={() => addChildBlock(block.id, 'TURN_LEFT')}
             >
-              <Text style={styles.addChildText}>+ Sola Dön</Text>
+              <Text style={styles.addChildText}>+ {t.blocks.TURN_LEFT}</Text>
             </TouchableOpacity>
           </View>
         </View>
       );
     }
 
-    // Standart Komut Bloğu
     return (
       <TouchableOpacity
         key={block.id}
         style={[
           styles.puzzleBlockTag,
-          { backgroundColor: conf.color, borderBottomColor: conf.shadowColor },
+          { backgroundColor: visual.color, borderBottomColor: visual.shadowColor },
           isActive && styles.activeBlockTag,
         ]}
         onPress={() => removeBlock(block.id)}
         activeOpacity={0.8}
       >
         <Text style={styles.indexBadge}>{index + 1}</Text>
-        <Text style={styles.blockIconText}>{conf.icon}</Text>
-        <Text style={styles.blockLabel}>{conf.label}</Text>
+        <Text style={styles.blockIconText}>{visual.icon}</Text>
+        <Text style={styles.blockLabel}>{label}</Text>
         <Text style={styles.deleteBadge}>✕</Text>
-        <View style={[styles.puzzleNub, { backgroundColor: conf.color }]} />
+        <View style={[styles.puzzleNub, { backgroundColor: visual.color }]} />
       </TouchableOpacity>
     );
   };
@@ -198,14 +206,16 @@ export const Workspace = () => {
         style={[styles.dropZone, dropZoneLayout ? styles.dropZoneReady : null]}
       >
         <View style={styles.headerRow}>
-          <Text style={styles.sectionTitle}>KOD DİZİLİMİ ({workspaceBlocks.length})</Text>
-          <Text style={styles.hintText}>Sürükleyin veya dokunun</Text>
+          <Text style={styles.sectionTitle}>
+            {t.codeSequence} ({workspaceBlocks.length})
+          </Text>
+          <Text style={styles.hintText}>{t.dragHint}</Text>
         </View>
 
         <View style={styles.sequenceWrapContainer}>
           {workspaceBlocks.length === 0 ? (
             <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>Komutları buraya sürükleyip bırakın...</Text>
+              <Text style={styles.emptyText}>{t.emptyWorkspace}</Text>
             </View>
           ) : (
             workspaceBlocks.map((block, idx) => renderBlockItem(block, idx))
@@ -215,18 +225,18 @@ export const Workspace = () => {
 
       {/* Komut Blokları Paleti */}
       <View style={styles.paletteSection}>
-        <Text style={styles.paletteTitle}>KOMUT BLOKLARI</Text>
+        <Text style={styles.paletteTitle}>{t.commandPalette}</Text>
         <View style={styles.paletteRow}>
           {(['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT', 'IF_WALL'] as CommandType[]).map((type) => {
-            const conf = BLOCK_CONFIG[type];
+            const visual = BLOCK_COLORS[type];
             return (
               <DraggableBlock
                 key={type}
                 type={type}
-                label={conf.label}
-                color={conf.color}
-                shadowColor={conf.shadowColor}
-                icon={conf.icon}
+                label={t.blocks[type]}
+                color={visual.color}
+                shadowColor={visual.shadowColor}
+                icon={visual.icon}
                 dropZoneLayout={dropZoneLayout}
                 onDropSuccess={addBlock}
               />

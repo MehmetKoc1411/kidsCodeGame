@@ -1,103 +1,127 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useGameStore } from '../../store/useGameStore';
+import { CodePreviewModal } from '../workspace/CodePreviewModal';
+import { TRANSLATIONS } from '../../core/translations';
 
 export const PlayControls = () => {
-  const status = useGameStore((s) => s.status);
+  const [showCode, setShowCode] = useState(false);
+  const language = useGameStore((s) => s.language);
   const runCode = useGameStore((s) => s.runCode);
   const resetGame = useGameStore((s) => s.resetGame);
   const clearWorkspace = useGameStore((s) => s.clearWorkspace);
-  const nextLevel = useGameStore((s) => s.nextLevel);
+  const status = useGameStore((s) => s.status);
+  const workspaceBlocks = useGameStore((s) => s.workspaceBlocks);
+
+  const t = TRANSLATIONS[language];
+  const isRunning = status === 'RUNNING';
 
   return (
     <View style={styles.container}>
-      {status === 'SUCCESS' ? (
-        <TouchableOpacity style={[styles.btn, styles.successBtn]} onPress={nextLevel}>
-          <Text style={styles.btnText}>Tebrikler! Sonraki Seviye 🚀</Text>
+      <View style={styles.actionRow}>
+        <TouchableOpacity
+          style={[styles.btn, styles.runBtn, isRunning && styles.btnDisabled]}
+          onPress={runCode}
+          disabled={isRunning || workspaceBlocks.length === 0}
+          activeOpacity={0.8}
+        >
+          <Text style={styles.runBtnText}>
+            {isRunning ? t.running : t.runCode}
+          </Text>
         </TouchableOpacity>
-      ) : (
-        <View style={styles.row}>
-          <TouchableOpacity
-            style={[styles.btn, styles.runBtn, status === 'RUNNING' && styles.disabledBtn]}
-            onPress={runCode}
-            disabled={status === 'RUNNING'}
-          >
-            <Text style={styles.btnText}>
-              {status === 'RUNNING' ? 'Çalışıyor...' : '▶ Kodu Çalıştır'}
-            </Text>
-          </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.btn, styles.secondaryBtn]} onPress={resetGame}>
-            <Text style={styles.secondaryBtnText}>Yenile</Text>
-          </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.btn, styles.secondaryBtn]}
+          onPress={resetGame}
+          disabled={isRunning}
+        >
+          <Text style={styles.secondaryBtnText}>{t.reset}</Text>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={[styles.btn, styles.clearBtn]} onPress={clearWorkspace}>
-            <Text style={styles.clearBtnText}>Sil</Text>
-          </TouchableOpacity>
-        </View>
-      )}
+        <TouchableOpacity
+          style={[styles.btn, styles.clearBtn]}
+          onPress={clearWorkspace}
+          disabled={isRunning}
+        >
+          <Text style={styles.clearBtnText}>{t.clear}</Text>
+        </TouchableOpacity>
+      </View>
 
-      {status === 'FAILED' && (
-        <Text style={styles.failText}>Hedefe ulaşılamadı veya engele çarptı. Tekrar dene!</Text>
-      )}
+      <TouchableOpacity
+        style={styles.codePreviewBtn}
+        onPress={() => setShowCode(true)}
+        activeOpacity={0.8}
+      >
+        <Text style={styles.codePreviewText}>{t.viewCode}</Text>
+      </TouchableOpacity>
+
+      <CodePreviewModal visible={showCode} onClose={() => setShowCode(false)} />
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   container: {
-    marginTop: 16,
     gap: 8,
   },
-  row: {
+  actionRow: {
     flexDirection: 'row',
     gap: 8,
   },
   btn: {
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
     alignItems: 'center',
     justifyContent: 'center',
   },
   runBtn: {
     flex: 2,
     backgroundColor: '#10B981',
-    elevation: 3,
+    borderBottomWidth: 4,
+    borderBottomColor: '#059669',
+  },
+  runBtnText: {
+    color: '#FFFFFF',
+    fontWeight: '800',
+    fontSize: 14,
   },
   secondaryBtn: {
     flex: 1,
     backgroundColor: '#E2E8F0',
+    borderBottomWidth: 3,
+    borderBottomColor: '#CBD5E1',
+  },
+  secondaryBtnText: {
+    color: '#334155',
+    fontWeight: '700',
+    fontSize: 13,
   },
   clearBtn: {
     flex: 1,
     backgroundColor: '#FEE2E2',
-  },
-  disabledBtn: {
-    opacity: 0.6,
-  },
-  successBtn: {
-    backgroundColor: '#10B981',
-  },
-  btnText: {
-    color: '#FFFFFF',
-    fontWeight: '800',
-    fontSize: 15,
-  },
-  secondaryBtnText: {
-    color: '#475569',
-    fontWeight: '700',
-    fontSize: 14,
+    borderBottomWidth: 3,
+    borderBottomColor: '#FCA5A5',
   },
   clearBtnText: {
-    color: '#EF4444',
+    color: '#DC2626',
     fontWeight: '700',
-    fontSize: 14,
-  },
-  failText: {
-    textAlign: 'center',
-    color: '#EF4444',
     fontSize: 13,
-    fontWeight: '600',
-    marginTop: 4,
+  },
+  codePreviewBtn: {
+    backgroundColor: '#1E293B',
+    paddingVertical: 10,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderBottomWidth: 3,
+    borderBottomColor: '#0F172A',
+  },
+  codePreviewText: {
+    color: '#38BDF8',
+    fontWeight: '800',
+    fontSize: 12,
+    letterSpacing: 0.4,
+  },
+  btnDisabled: {
+    opacity: 0.6,
   },
 });

@@ -8,12 +8,17 @@ import { PlayControls } from './src/components/controls/PlayControls';
 import { VictoryModal } from './src/components/modals/VictoryModal';
 import { useGameStore } from './src/store/useGameStore';
 import { LEVELS } from './src/core/levels';
+import { TRANSLATIONS } from './src/core/translations';
 
 export default function App() {
   const currentLevelIndex = useGameStore((s) => s.currentLevelIndex);
   const completedLevels = useGameStore((s) => s.completedLevels);
+  const language = useGameStore((s) => s.language);
+  const setLanguage = useGameStore((s) => s.setLanguage);
   const loadProgress = useGameStore((s) => s.loadProgress);
+
   const currentLevel = LEVELS[currentLevelIndex] || LEVELS[0];
+  const t = TRANSLATIONS[language];
 
   useEffect(() => {
     loadProgress();
@@ -28,12 +33,29 @@ export default function App() {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* Üst Başlık ve Bölüm Seçici */}
+            {/* Üst Bar: Bölüm Bilgisi ve Dil Değiştirici */}
             <View style={styles.header}>
-              <Text style={styles.levelBadge}>BÖLÜM {currentLevel.id}</Text>
-              <Text style={styles.levelTitle}>{currentLevel.title}</Text>
+              <View style={styles.topRow}>
+                <View>
+                  <Text style={styles.levelBadge}>
+                    {t.levelPrefix} {currentLevel.id}
+                  </Text>
+                  <Text style={styles.levelTitle}>{currentLevel.title}</Text>
+                </View>
 
-              {/* Bölüm Butonları Barı */}
+                {/* TR / EN Dil Geçiş Butonu */}
+                <TouchableOpacity
+                  style={styles.langButton}
+                  onPress={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
+                  activeOpacity={0.7}
+                >
+                  <Text style={styles.langButtonText}>
+                    {language === 'tr' ? '🇬🇧 EN' : '🇹🇷 TR'}
+                  </Text>
+                </TouchableOpacity>
+              </View>
+
+              {/* Bölüm Seçim Butonları Barı */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -87,7 +109,7 @@ export default function App() {
               <Workspace />
             </View>
 
-            {/* Oynat / Yenile / Sil Kontrolleri */}
+            {/* Oynat / Yenile / Sil / Kod Önizleme Butonları */}
             <View style={styles.controlsSection}>
               <PlayControls />
             </View>
@@ -111,12 +133,17 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 8,
+    paddingTop: 6,
     paddingBottom: 24,
   },
   header: {
+    marginBottom: 8,
+  },
+  topRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 10,
+    marginBottom: 6,
   },
   levelBadge: {
     fontSize: 11,
@@ -125,11 +152,23 @@ const styles = StyleSheet.create({
     letterSpacing: 1.2,
   },
   levelTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: '800',
     color: '#0F172A',
     marginTop: 2,
-    marginBottom: 8,
+  },
+  langButton: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#C7D2FE',
+  },
+  langButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#4F46E5',
   },
   levelSelector: {
     flexDirection: 'row',
@@ -137,9 +176,9 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   levelDot: {
-    paddingHorizontal: 12,
-    height: 36,
-    borderRadius: 12,
+    paddingHorizontal: 11,
+    height: 34,
+    borderRadius: 10,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
