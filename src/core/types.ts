@@ -1,20 +1,25 @@
 export type Direction = 'UP' | 'RIGHT' | 'DOWN' | 'LEFT';
 
-export type CommandType = 'FORWARD' | 'TURN_RIGHT' | 'TURN_LEFT' | 'REPEAT';
+export type CommandType =
+  | 'FORWARD'
+  | 'TURN_RIGHT'
+  | 'TURN_LEFT'
+  | 'REPEAT'
+  | 'IF_WALL';
 
-export interface CodeBlock {
-  id: string;
-  type: CommandType;
-  value?: number;          // REPEAT için döngü sayısı (örn: 2, 3)
-  children?: CodeBlock[];  // REPEAT bloğu içindeki alt komutlar
-}
+export type GameStatus = 'IDLE' | 'RUNNING' | 'SUCCESS' | 'FAILED';
 
 export interface Position {
   x: number;
   y: number;
 }
 
-export type GameStatus = 'IDLE' | 'RUNNING' | 'SUCCESS' | 'FAILED';
+export interface CodeBlock {
+  id: string;
+  type: CommandType;
+  value?: number;
+  children?: CodeBlock[];
+}
 
 export interface LevelConfig {
   id: number;
@@ -25,5 +30,5 @@ export interface LevelConfig {
   walls: Position[];
   stars: Position[];
   availableBlocks: CommandType[];
-  maxBlocks?: number;
+  maxBlocks: number;
 }

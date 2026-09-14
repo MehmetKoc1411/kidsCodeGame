@@ -127,19 +127,23 @@ export const LEVELS: LevelConfig[] = [
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
     maxBlocks: 10,
   },
-  {
+{
     id: 10,
     title: 'Büyük Final: Kod Ustası',
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 4, direction: 'UP' },
     target: { x: 4, y: 0 },
+    // Geçitleri açık, S şeklinde rota sunan duvar dizilimi:
     walls: [
-      { x: 1, y: 4 }, { x: 1, y: 3 }, { x: 1, y: 2 },
-      { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 2 },
-      { x: 2, y: 2 },
+      { x: 1, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 1 }, // Sol bariyer (alt ve üstten geçit açık)
+      { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 }, // Sağ bariyer (orta ve köşelerden dolanılabilir)
     ],
-    stars: [{ x: 0, y: 0 }, { x: 2, y: 4 }, { x: 4, y: 4 }],
+    stars: [
+      { x: 0, y: 0 }, // Sol üst yıldız
+      { x: 2, y: 2 }, // Merkez gizli yıldız
+      { x: 4, y: 4 }, // Sağ alt köşe yıldızı
+    ],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 12,
+    maxBlocks: 14,
   },
 ];

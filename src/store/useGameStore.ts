@@ -14,8 +14,8 @@ interface GameState {
   workspaceBlocks: CodeBlock[];
   activeBlockId: string | null;
   status: GameStatus;
+  earnedScoreStars: number;
 
-  // Eylemler
   addBlock: (type: CommandType) => void;
   addChildBlock: (parentId: string, type: CommandType) => void;
   removeBlock: (id: string) => void;
@@ -52,6 +52,7 @@ export const useGameStore = create<GameState>((set, get) => {
     workspaceBlocks: [],
     activeBlockId: null,
     status: 'IDLE',
+    earnedScoreStars: 3,
 
     loadProgress: async () => {
       try {
@@ -66,11 +67,12 @@ export const useGameStore = create<GameState>((set, get) => {
     },
 
     addBlock: (type) => {
+      const isContainer = type === 'REPEAT' || type === 'IF_WALL';
       const newBlock: CodeBlock = {
         id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
         type,
         value: type === 'REPEAT' ? 3 : undefined,
-        children: type === 'REPEAT' ? [] : undefined,
+        children: isContainer ? [] : undefined,
       };
       set((state) => ({ workspaceBlocks: [...state.workspaceBlocks, newBlock] }));
     },
@@ -143,32 +145,44 @@ export const useGameStore = create<GameState>((set, get) => {
       let currentPos = { ...level.start };
       let starsCollected: Position[] = [];
 
-      const queue: { id: string; type: CommandType }[] = [];
-      const parseBlock = (block: CodeBlock) => {
+      // Komutları ve Koşulları Yürütme Yardımcısı
+      const executeBlock = async (block: CodeBlock): Promise<boolean> => {
+        set({ activeBlockId: block.id });
+
         if (block.type === 'REPEAT' && block.children) {
           const repeatCount = block.value || 3;
           for (let i = 0; i < repeatCount; i++) {
             for (const child of block.children) {
-              parseBlock(child);
+              const ok = await executeBlock(child);
+              if (!ok) return false;
             }
           }
-        } else {
-          queue.push({ id: block.id, type: block.type });
+          return true;
         }
-      };
 
-      workspaceBlocks.forEach(parseBlock);
+        if (block.type === 'IF_WALL' && block.children) {
+          const ahead = getNextPosition(currentPos, currentPos.direction);
+          const isAheadWall =
+            ahead.x < 0 || ahead.x >= level.gridSize.cols ||
+            ahead.y < 0 || ahead.y >= level.gridSize.rows ||
+            level.walls.some((w) => w.x === ahead.x && w.y === ahead.y);
 
-      for (const cmd of queue) {
-        set({ activeBlockId: cmd.id });
+          if (isAheadWall) {
+            for (const child of block.children) {
+              const ok = await executeBlock(child);
+              if (!ok) return false;
+            }
+          }
+          return true;
+        }
 
-        if (cmd.type === 'TURN_LEFT' || cmd.type === 'TURN_RIGHT') {
+        if (block.type === 'TURN_LEFT' || block.type === 'TURN_RIGHT') {
           currentPos.direction = getNextDirection(
             currentPos.direction,
-            cmd.type === 'TURN_RIGHT' ? 'RIGHT' : 'LEFT'
+            cmdToTurn(block.type)
           );
           sounds.play('STEP');
-        } else if (cmd.type === 'FORWARD') {
+        } else if (block.type === 'FORWARD') {
           const next = getNextPosition(currentPos, currentPos.direction);
 
           const isOutOfBounds =
@@ -180,7 +194,7 @@ export const useGameStore = create<GameState>((set, get) => {
           if (isOutOfBounds || isHitWall) {
             sounds.play('FAIL');
             set({ status: 'FAILED', activeBlockId: null });
-            return;
+            return false;
           }
 
           currentPos.x = next.x;
@@ -201,14 +215,35 @@ export const useGameStore = create<GameState>((set, get) => {
           collectedStars: [...starsCollected],
         });
 
-        await new Promise((res) => setTimeout(res, 400));
+        await new Promise((res) => setTimeout(res, 380));
+        return true;
+      };
+
+      const cmdToTurn = (type: CommandType): 'LEFT' | 'RIGHT' =>
+        type === 'TURN_RIGHT' ? 'RIGHT' : 'LEFT';
+
+      for (const block of workspaceBlocks) {
+        const ok = await executeBlock(block);
+        if (!ok) return;
       }
 
       set({ activeBlockId: null });
 
       if (currentPos.x === level.target.x && currentPos.y === level.target.y) {
         sounds.play('WIN');
-        set({ status: 'SUCCESS' });
+
+        // Blok Optimizasyonuna Göre Yıldız Hesaplama
+        let starsWon = 1;
+        const collectedAllLevelStars = starsCollected.length >= level.stars.length;
+        const usedOptimalBlocks = workspaceBlocks.length <= level.maxBlocks;
+
+        if (collectedAllLevelStars && usedOptimalBlocks) {
+          starsWon = 3;
+        } else if (collectedAllLevelStars || usedOptimalBlocks) {
+          starsWon = 2;
+        }
+
+        set({ status: 'SUCCESS', earnedScoreStars: starsWon });
       } else {
         sounds.play('FAIL');
         set({ status: 'FAILED' });

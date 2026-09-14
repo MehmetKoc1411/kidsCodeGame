@@ -6,38 +6,47 @@ import { LEVELS } from '../../core/levels';
 export const VictoryModal = () => {
   const status = useGameStore((s) => s.status);
   const currentLevelIndex = useGameStore((s) => s.currentLevelIndex);
-  const collectedStars = useGameStore((s) => s.collectedStars);
+  const earnedScoreStars = useGameStore((s) => s.earnedScoreStars);
   const nextLevel = useGameStore((s) => s.nextLevel);
   const resetGame = useGameStore((s) => s.resetGame);
 
   const level = LEVELS[currentLevelIndex];
   const isVisible = status === 'SUCCESS';
-  const totalStars = level.stars.length;
+
+  const getPerformanceMessage = () => {
+    switch (earnedScoreStars) {
+      case 3:
+        return 'Mükemmel! En verimli kodla tüm yıldızları topladın!';
+      case 2:
+        return 'Çok iyi! Hedefe ulaştın ve harika bir iş çıkardın.';
+      default:
+        return 'Bölümü geçtin! Daha az blok kullanarak 3 yıldız almayı dene.';
+    }
+  };
 
   return (
     <Modal visible={isVisible} transparent animationType="fade">
       <View style={styles.overlay}>
         <View style={styles.card}>
-          <Text style={styles.badge}>🎉 HARİKA İŞ!</Text>
-          <Text style={styles.title}>Bölüm Tamamlandı</Text>
+          <Text style={styles.badge}>🎉 TEBRİKLER!</Text>
+          <Text style={styles.title}>{level?.title || 'Bölüm Tamamlandı'}</Text>
 
-          {/* Yıldız Gösterimi */}
+          {/* 3 Yıldızlı Performans Gösterimi */}
           <View style={styles.starsRow}>
-            {Array.from({ length: totalStars > 0 ? totalStars : 3 }).map((_, i) => {
-              const earned = i < collectedStars.length || totalStars === 0;
+            {[1, 2, 3].map((starIndex) => {
+              const isEarned = starIndex <= earnedScoreStars;
               return (
-                <Text key={i} style={[styles.starIcon, !earned && styles.starDimmed]}>
+                <Text
+                  key={starIndex}
+                  style={[styles.starIcon, !isEarned && styles.starDimmed]}
+                >
                   ⭐
                 </Text>
               );
             })}
           </View>
 
-          <Text style={styles.subtext}>
-            {totalStars > 0
-              ? `${collectedStars.length} / ${totalStars} yıldız topladın!`
-              : 'Roketi başarıyla hedefe ulaştırdın!'}
-          </Text>
+          <Text style={styles.subtext}>{getPerformanceMessage()}</Text>
 
           <View style={styles.buttonGroup}>
             <TouchableOpacity style={styles.replayButton} onPress={resetGame}>
@@ -83,28 +92,30 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   title: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: '800',
     color: '#0F172A',
     marginBottom: 16,
+    textAlign: 'center',
   },
   starsRow: {
     flexDirection: 'row',
-    gap: 8,
-    marginBottom: 12,
+    gap: 10,
+    marginBottom: 14,
   },
   starIcon: {
-    fontSize: 34,
+    fontSize: 36,
   },
   starDimmed: {
     opacity: 0.2,
   },
   subtext: {
-    fontSize: 14,
+    fontSize: 13,
     color: '#64748B',
     fontWeight: '600',
     marginBottom: 24,
     textAlign: 'center',
+    lineHeight: 18,
   },
   buttonGroup: {
     flexDirection: 'row',

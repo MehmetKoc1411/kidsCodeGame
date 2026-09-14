@@ -12,6 +12,7 @@ const BLOCK_CONFIG: Record<
   TURN_RIGHT: { label: 'Sağa', color: '#8B5CF6', shadowColor: '#6D28D9', icon: '↪️' },
   TURN_LEFT: { label: 'Sola', color: '#EC4899', shadowColor: '#BE185D', icon: '↩️' },
   REPEAT: { label: '3x Döngü', color: '#F59E0B', shadowColor: '#B45309', icon: '🔁' },
+  IF_WALL: { label: 'Engel Varsa', color: '#EF4444', shadowColor: '#B91C1C', icon: '🧱' },
 };
 
 export const Workspace = () => {
@@ -41,6 +42,7 @@ export const Workspace = () => {
     const conf = BLOCK_CONFIG[block.type];
     const isActive = activeBlockId === block.id;
 
+    // Döngü Bloğu (REPEAT)
     if (block.type === 'REPEAT') {
       return (
         <View
@@ -57,7 +59,6 @@ export const Workspace = () => {
             </TouchableOpacity>
           </View>
 
-          {/* Döngü İçi Komutlar */}
           <View style={styles.childBlocksArea}>
             {block.children && block.children.length > 0 ? (
               block.children.map((child) => {
@@ -82,11 +83,10 @@ export const Workspace = () => {
                 );
               })
             ) : (
-              <Text style={styles.emptyChildText}>Döngüye komut ekleyin</Text>
+              <Text style={styles.emptyChildText}>Döngüye komut ekle</Text>
             )}
           </View>
 
-          {/* Döngüye Hızlı Komut Ekleme Butonları */}
           <View style={styles.addChildRow}>
             <TouchableOpacity
               style={[styles.addChildBtn, { backgroundColor: '#3B82F6' }]}
@@ -105,6 +105,70 @@ export const Workspace = () => {
       );
     }
 
+    // Koşul Bloğu (IF_WALL)
+    if (block.type === 'IF_WALL') {
+      return (
+        <View
+          key={block.id}
+          style={[styles.ifCard, isActive && styles.activeContainer]}
+        >
+          <View style={styles.ifHeader}>
+            <Text style={styles.ifHeaderText}>🧱 Engel Varsa Yap:</Text>
+            <TouchableOpacity
+              onPress={() => removeBlock(block.id)}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
+              <Text style={styles.deleteBadge}>✕</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.childBlocksArea}>
+            {block.children && block.children.length > 0 ? (
+              block.children.map((child) => {
+                const childConf = BLOCK_CONFIG[child.type];
+                const isChildActive = activeBlockId === child.id;
+
+                return (
+                  <TouchableOpacity
+                    key={child.id}
+                    style={[
+                      styles.childTag,
+                      { backgroundColor: childConf.color, borderBottomColor: childConf.shadowColor },
+                      isChildActive && styles.activeChildTag,
+                    ]}
+                    onPress={() => removeBlock(child.id)}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.blockIconText}>{childConf.icon}</Text>
+                    <Text style={styles.childLabel}>{childConf.label}</Text>
+                    <Text style={styles.childDeleteBadge}>✕</Text>
+                  </TouchableOpacity>
+                );
+              })
+            ) : (
+              <Text style={styles.emptyChildText}>Eylemi ekleyin</Text>
+            )}
+          </View>
+
+          <View style={styles.addChildRow}>
+            <TouchableOpacity
+              style={[styles.addChildBtn, { backgroundColor: '#8B5CF6' }]}
+              onPress={() => addChildBlock(block.id, 'TURN_RIGHT')}
+            >
+              <Text style={styles.addChildText}>+ Sağa Dön</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={[styles.addChildBtn, { backgroundColor: '#EC4899' }]}
+              onPress={() => addChildBlock(block.id, 'TURN_LEFT')}
+            >
+              <Text style={styles.addChildText}>+ Sola Dön</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      );
+    }
+
+    // Standart Komut Bloğu
     return (
       <TouchableOpacity
         key={block.id}
@@ -127,7 +191,7 @@ export const Workspace = () => {
 
   return (
     <View style={styles.container}>
-      {/* Kod Dizilim Alanı (Drop Zone) */}
+      {/* Sürükle-Bırak Kod Dizilim Alanı */}
       <View
         ref={dropZoneRef}
         onLayout={onDropZoneLayout}
@@ -138,7 +202,6 @@ export const Workspace = () => {
           <Text style={styles.hintText}>Sürükleyin veya dokunun</Text>
         </View>
 
-        {/* Ekrana sığarak alt alta geçen sarıcı yapı */}
         <View style={styles.sequenceWrapContainer}>
           {workspaceBlocks.length === 0 ? (
             <View style={styles.emptyContainer}>
@@ -154,7 +217,7 @@ export const Workspace = () => {
       <View style={styles.paletteSection}>
         <Text style={styles.paletteTitle}>KOMUT BLOKLARI</Text>
         <View style={styles.paletteRow}>
-          {(['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'] as CommandType[]).map((type) => {
+          {(['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT', 'IF_WALL'] as CommandType[]).map((type) => {
             const conf = BLOCK_CONFIG[type];
             return (
               <DraggableBlock
@@ -286,8 +349,20 @@ const styles = StyleSheet.create({
     minWidth: 140,
     gap: 4,
   },
+  ifCard: {
+    backgroundColor: '#FEE2E2',
+    borderWidth: 1.5,
+    borderColor: '#EF4444',
+    borderBottomWidth: 3,
+    borderBottomColor: '#B91C1C',
+    borderRadius: 12,
+    padding: 6,
+    minWidth: 145,
+    gap: 4,
+  },
   activeContainer: {
-    borderColor: '#B45309',
+    borderColor: '#4338CA',
+    borderWidth: 2,
     transform: [{ scale: 1.03 }],
   },
   repeatHeader: {
@@ -299,6 +374,16 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '800',
     color: '#92400E',
+  },
+  ifHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  ifHeaderText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#991B1B',
   },
   childBlocksArea: {
     flexDirection: 'row',
@@ -363,7 +448,7 @@ const styles = StyleSheet.create({
   paletteRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    gap: 8,
+    gap: 6,
     zIndex: 100,
   },
 });
