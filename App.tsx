@@ -6,7 +6,9 @@ import { GameGrid } from './src/components/grid/GameGrid';
 import { Workspace } from './src/components/workspace/Workspace';
 import { PlayControls } from './src/components/controls/PlayControls';
 import { VictoryModal } from './src/components/modals/VictoryModal';
+import { LevelEditorModal } from './src/components/editor/LevelEditorModal';
 import { useGameStore } from './src/store/useGameStore';
+import { useEditorStore } from './src/store/useEditorStore';
 import { LEVELS } from './src/core/levels';
 import { TRANSLATIONS } from './src/core/translations';
 
@@ -16,6 +18,7 @@ export default function App() {
   const language = useGameStore((s) => s.language);
   const setLanguage = useGameStore((s) => s.setLanguage);
   const loadProgress = useGameStore((s) => s.loadProgress);
+  const setEditorOpen = useEditorStore((s) => s.setEditorOpen);
 
   const currentLevel = LEVELS[currentLevelIndex] || LEVELS[0];
   const t = TRANSLATIONS[language];
@@ -33,7 +36,7 @@ export default function App() {
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* Üst Bar: Bölüm Bilgisi ve Dil Değiştirici */}
+            {/* Üst Bar: Bölüm Bilgisi, Atölye Butonu ve Dil Değiştirici */}
             <View style={styles.header}>
               <View style={styles.topRow}>
                 <View>
@@ -43,19 +46,31 @@ export default function App() {
                   <Text style={styles.levelTitle}>{currentLevel.title}</Text>
                 </View>
 
-                {/* TR / EN Dil Geçiş Butonu */}
-                <TouchableOpacity
-                  style={styles.langButton}
-                  onPress={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                  activeOpacity={0.7}
-                >
-                  <Text style={styles.langButtonText}>
-                    {language === 'tr' ? '🇬🇧 EN' : '🇹🇷 TR'}
-                  </Text>
-                </TouchableOpacity>
+                {/* Sağ Üst Buton Grubu: Atölye & Dil */}
+                <View style={styles.topActionGroup}>
+                  <TouchableOpacity
+                    style={styles.editorOpenButton}
+                    onPress={() => setEditorOpen(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.editorOpenButtonText}>
+                      {language === 'tr' ? '🛠️ Atölye' : '🛠️ Studio'}
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={styles.langButton}
+                    onPress={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={styles.langButtonText}>
+                      {language === 'tr' ? '🇬🇧 EN' : '🇹🇷 TR'}
+                    </Text>
+                  </TouchableOpacity>
+                </View>
               </View>
 
-              {/* Bölüm Seçim Butonları Barı */}
+              {/* 20 Seviyelik Kaydırılabilir Bölüm Çubuğu */}
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -99,7 +114,7 @@ export default function App() {
               </ScrollView>
             </View>
 
-            {/* 5x5 Izgara */}
+            {/* 5x5 Oyun Izgarası */}
             <View style={styles.gridSection}>
               <GameGrid />
             </View>
@@ -117,6 +132,9 @@ export default function App() {
 
           {/* Zafer Modalı */}
           <VictoryModal />
+
+          {/* Kendi Bölümünü Tasarla (Level Editor) Modalı */}
+          <LevelEditorModal />
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -156,6 +174,24 @@ const styles = StyleSheet.create({
     fontWeight: '800',
     color: '#0F172A',
     marginTop: 2,
+  },
+  topActionGroup: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  editorOpenButton: {
+    backgroundColor: '#FEF3C7',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  editorOpenButtonText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#B45309',
   },
   langButton: {
     backgroundColor: '#EEF2FF',
