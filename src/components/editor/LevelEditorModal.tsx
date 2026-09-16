@@ -5,19 +5,27 @@ import {
   Text,
   TouchableOpacity,
   StyleSheet,
-  Share,
+  ScrollView,
+  Dimensions,
   Alert,
 } from 'react-native';
 import { useEditorStore, BrushMode } from '../../store/useEditorStore';
 import { useGameStore } from '../../store/useGameStore';
-import { LEVELS } from '../../core/levels';
+import { CommandType } from '../../core/types';
 
-const BRUSHES: { id: BrushMode; label: string; icon: string; color: string }[] = [
-  { id: 'WALL', label: 'Duvar', icon: '🧱', color: '#64748B' },
-  { id: 'STAR', label: 'Yıldız', icon: '⭐', color: '#F59E0B' },
-  { id: 'START', label: 'Robot', icon: '🤖', color: '#3B82F6' },
-  { id: 'TARGET', label: 'Bayrak', icon: '🚩', color: '#10B981' },
-  { id: 'ERASE', label: 'Silgi', icon: '🧹', color: '#EF4444' },
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GRID_PADDING = 8;
+const BOARD_SIZE = Math.min(SCREEN_WIDTH - 48, 300);
+const CELL_SIZE = (BOARD_SIZE - GRID_PADDING * 2) / 5;
+
+const BRUSHES: { mode: BrushMode; labelTR: string; labelEN: string; icon: string }[] = [
+  { mode: 'WALL', labelTR: 'Duvar', labelEN: 'Wall', icon: '🧱' },
+  { mode: 'STAR', labelTR: 'Yıldız', labelEN: 'Star', icon: '⭐' },
+  { mode: 'KEY', labelTR: 'Anahtar', labelEN: 'Key', icon: '🔑' },
+  { mode: 'DOOR', labelTR: 'Kapı', labelEN: 'Door', icon: '🚪' },
+  { mode: 'START', labelTR: 'Robot', labelEN: 'Start', icon: '🤖' },
+  { mode: 'TARGET', labelTR: 'Bayrak', labelEN: 'Flag', icon: '🚩' },
+  { mode: 'ERASE', labelTR: 'Silgi', labelEN: 'Eraser', icon: '🧹' },
 ];
 
 export const LevelEditorModal = () => {
@@ -26,117 +34,170 @@ export const LevelEditorModal = () => {
   const selectedBrush = useEditorStore((s) => s.selectedBrush);
   const setSelectedBrush = useEditorStore((s) => s.setSelectedBrush);
   const customLevel = useEditorStore((s) => s.customLevel);
-  const handleCellPress = useEditorStore((s) => s.handleCellPress);
-  const resetEditorGrid = useEditorStore((s) => s.resetEditorGrid);
-  const exportLevelAsJSON = useEditorStore((s) => s.exportLevelAsJSON);
+  const handleCellClick = useEditorStore((s) => s.handleCellClick);
+  const toggleAvailableBlock = useEditorStore((s) => s.toggleAvailableBlock);
+  const resetEditor = useEditorStore((s) => s.resetEditor);
+  const exportJSON = useEditorStore((s) => s.exportJSON);
+  const testCustomLevel = useEditorStore((s) => s.testCustomLevel);
+  const language = useGameStore((s) => s.language);
 
-  // Tasarlanan bölümü hemen oyuna aktar ve test et
-  const handlePlayLevel = () => {
-    const customIndex = LEVELS.length; // 21. dinamik slot
-    LEVELS[customIndex] = customLevel;
+  if (!customLevel) return null;
 
-    useGameStore.setState({
-      currentLevelIndex: customIndex,
-      character: { ...customLevel.start },
-      collectedStars: [],
-      workspaceBlocks: [],
-      activeBlockId: null,
-      status: 'IDLE',
-    });
-
-    setEditorOpen(false);
-  };
-
-  const handleShareJSON = async () => {
-    try {
-      const json = exportLevelAsJSON();
-      await Share.share({
-        message: json,
-        title: 'KidsCode Özel Seviye JSON',
-      });
-    } catch {
-      Alert.alert('Hata', 'JSON dışa aktarılamadı');
-    }
+  const handleExport = () => {
+    const json = exportJSON();
+    Alert.alert(
+      language === 'tr' ? 'Bölüm JSON Kodu' : 'Level JSON Export',
+      json,
+      [{ text: 'Tamam' }]
+    );
   };
 
   return (
-    <Modal visible={isEditorOpen} animationType="slide" transparent>
+    <Modal visible={isEditorOpen} transparent animationType="slide">
       <View style={styles.overlay}>
-        <View style={styles.modalCard}>
-          {/* Başlık ve Kapat */}
+        <View style={styles.card}>
+          {/* Başlık */}
           <View style={styles.header}>
-            <Text style={styles.title}>🛠️ Bölüm Tasarım Atölyesi</Text>
+            <Text style={styles.title}>
+              {language === 'tr' ? '🛠️ Bölüm Tasarımcısı' : '🛠️ Level Studio'}
+            </Text>
             <TouchableOpacity onPress={() => setEditorOpen(false)}>
               <Text style={styles.closeBtn}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          {/* 5x5 Çizim Izgarası */}
-          <View style={styles.gridBoard}>
-            {Array.from({ length: 5 }).map((_, r) => (
-              <View key={`row_${r}`} style={styles.gridRow}>
-                {Array.from({ length: 5 }).map((_, c) => {
-                  const isRobot = customLevel.start.x === c && customLevel.start.y === r;
-                  const isTarget = customLevel.target.x === c && customLevel.target.y === r;
-                  const isWall = customLevel.walls.some((w) => w.x === c && w.y === r);
-                  const isStar = customLevel.stars.some((s) => s.x === c && s.y === r);
-
-                  return (
-                    <TouchableOpacity
-                      key={`col_${c}`}
-                      style={[styles.gridCell, isWall && styles.wallCell]}
-                      onPress={() => handleCellPress(c, r)}
-                      activeOpacity={0.7}
-                    >
-                      {isRobot && <Text style={styles.cellIcon}>🤖</Text>}
-                      {isTarget && <Text style={styles.cellIcon}>🚩</Text>}
-                      {isWall && <Text style={styles.cellIcon}>🧱</Text>}
-                      {isStar && <Text style={styles.cellIcon}>⭐</Text>}
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            ))}
-          </View>
-
-          {/* Fırça Seçim Araç Çubuğu */}
-          <View style={styles.brushRow}>
-            {BRUSHES.map((b) => {
-              const isSelected = selectedBrush === b.id;
-              return (
+          <ScrollView showsVerticalScrollIndicator={false}>
+            {/* Fırça Seçimi */}
+            <View style={styles.brushRow}>
+              {BRUSHES.map((b) => (
                 <TouchableOpacity
-                  key={b.id}
+                  key={b.mode}
                   style={[
                     styles.brushBtn,
-                    isSelected && { backgroundColor: b.color, borderColor: b.color },
+                    selectedBrush === b.mode && styles.brushBtnActive,
                   ]}
-                  onPress={() => setSelectedBrush(b.id)}
+                  onPress={() => setSelectedBrush(b.mode)}
                 >
                   <Text style={styles.brushIcon}>{b.icon}</Text>
                   <Text
-                    style={[styles.brushLabel, isSelected && styles.brushLabelActive]}
+                    style={[
+                      styles.brushLabel,
+                      selectedBrush === b.mode && styles.brushLabelActive,
+                    ]}
                   >
-                    {b.label}
+                    {language === 'tr' ? b.labelTR : b.labelEN}
                   </Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
+              ))}
+            </View>
 
-          {/* Aksiyon Butonları */}
-          <View style={styles.actionRow}>
-            <TouchableOpacity style={styles.clearBtn} onPress={resetEditorGrid}>
-              <Text style={styles.clearBtnText}>Temizle</Text>
-            </TouchableOpacity>
+            {/* 5x5 Tasarım Izgarası */}
+            <View style={styles.gridCard}>
+              {Array.from({ length: 5 }).map((_, r) => (
+                <View key={`row_${r}`} style={styles.row}>
+                  {Array.from({ length: 5 }).map((_, c) => {
+                    const isRobot =
+                      customLevel.start.x === c && customLevel.start.y === r;
+                    const isTarget =
+                      customLevel.target.x === c && customLevel.target.y === r;
+                    const isWall = customLevel.walls.some(
+                      (w) => w.x === c && w.y === r
+                    );
+                    const isStar = customLevel.stars.some(
+                      (s) => s.x === c && s.y === r
+                    );
+                    const isKey = customLevel.keys?.some(
+                      (k) => k.x === c && k.y === r
+                    );
+                    const isDoor = customLevel.doors?.some(
+                      (d) => d.x === c && d.y === r
+                    );
 
-            <TouchableOpacity style={styles.shareBtn} onPress={handleShareJSON}>
-              <Text style={styles.shareBtnText}>JSON Paylaş</Text>
-            </TouchableOpacity>
+                    return (
+                      <TouchableOpacity
+                        key={`cell_${c}_${r}`}
+                        style={[
+                          styles.cell,
+                          isWall && styles.wallCell,
+                          isDoor && styles.doorCell,
+                        ]}
+                        onPress={() => handleCellClick(c, r)}
+                        activeOpacity={0.7}
+                      >
+                        {isRobot && <Text style={styles.cellEmoji}>🤖</Text>}
+                        {isTarget && <Text style={styles.cellEmoji}>🚩</Text>}
+                        {isWall && <Text style={styles.cellEmoji}>🧱</Text>}
+                        {isStar && <Text style={styles.cellEmoji}>⭐</Text>}
+                        {isKey && <Text style={styles.cellEmoji}>🔑</Text>}
+                        {isDoor && <Text style={styles.cellEmoji}>🚪</Text>}
+                      </TouchableOpacity>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
 
-            <TouchableOpacity style={styles.playBtn} onPress={handlePlayLevel}>
-              <Text style={styles.playBtnText}>Oyna ▶</Text>
-            </TouchableOpacity>
-          </View>
+            {/* İzin Verilen Bloklar */}
+            <Text style={styles.sectionTitle}>
+              {language === 'tr' ? 'Kullanılabilir Bloklar:' : 'Available Blocks:'}
+            </Text>
+            <View style={styles.blocksToggleRow}>
+              {(['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT', 'IF_WALL'] as CommandType[]).map(
+                (cmd) => {
+                  const isChecked = customLevel.availableBlocks.includes(cmd);
+                  return (
+                    <TouchableOpacity
+                      key={cmd}
+                      style={[
+                        styles.blockToggleChip,
+                        isChecked && styles.blockToggleChipActive,
+                      ]}
+                      onPress={() => toggleAvailableBlock(cmd)}
+                    >
+                      <Text
+                        style={[
+                          styles.blockToggleText,
+                          isChecked && styles.blockToggleTextActive,
+                        ]}
+                      >
+                        {cmd}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                }
+              )}
+            </View>
+
+            {/* Alt İşlem Butonları */}
+            <View style={styles.actionButtons}>
+              <TouchableOpacity
+                style={[styles.btn, styles.testBtn]}
+                onPress={testCustomLevel}
+              >
+                <Text style={styles.btnTextWhite}>
+                  {language === 'tr' ? '▶ Bölümü Dene' : '▶ Playtest'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.btn, styles.exportBtn]}
+                onPress={handleExport}
+              >
+                <Text style={styles.btnTextDark}>
+                  {language === 'tr' ? '📋 JSON Al' : '📋 Export'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.btn, styles.resetBtn]}
+                onPress={resetEditor}
+              >
+                <Text style={styles.btnTextRed}>
+                  {language === 'tr' ? 'Temizle' : 'Reset'}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -151,126 +212,165 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  modalCard: {
+  card: {
     backgroundColor: '#FFFFFF',
     borderRadius: 24,
     padding: 16,
     width: '100%',
-    maxWidth: 350,
-    alignItems: 'center',
+    maxWidth: 380,
+    maxHeight: '90%',
     gap: 12,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    width: '100%',
   },
   title: {
     fontSize: 16,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#0F172A',
   },
   closeBtn: {
-    fontSize: 16,
-    color: '#94A3B8',
+    fontSize: 18,
     fontWeight: '800',
+    color: '#94A3B8',
     padding: 4,
-  },
-  gridBoard: {
-    backgroundColor: '#F1F5F9',
-    padding: 6,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: '#CBD5E1',
-  },
-  gridRow: {
-    flexDirection: 'row',
-  },
-  gridCell: {
-    width: 48,
-    height: 48,
-    margin: 2,
-    backgroundColor: '#FFFFFF',
-    borderRadius: 10,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
-  },
-  wallCell: {
-    backgroundColor: '#E2E8F0',
-  },
-  cellIcon: {
-    fontSize: 22,
   },
   brushRow: {
     flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 6,
-    justifyContent: 'center',
-    width: '100%',
+    marginBottom: 10,
   },
   brushBtn: {
-    flex: 1,
+    flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 6,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
     borderRadius: 10,
+    backgroundColor: '#F1F5F9',
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
-    backgroundColor: '#F8FAFC',
+    gap: 4,
+  },
+  brushBtnActive: {
+    backgroundColor: '#EEF2FF',
+    borderColor: '#6366F1',
   },
   brushIcon: {
-    fontSize: 16,
-    marginBottom: 2,
+    fontSize: 14,
   },
   brushLabel: {
-    fontSize: 10,
-    fontWeight: '700',
+    fontSize: 11,
+    fontWeight: '800',
     color: '#64748B',
   },
   brushLabelActive: {
-    color: '#FFFFFF',
-  },
-  actionRow: {
-    flexDirection: 'row',
-    gap: 8,
-    width: '100%',
-    marginTop: 4,
-  },
-  clearBtn: {
-    flex: 1,
-    backgroundColor: '#F1F5F9',
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  clearBtnText: {
-    color: '#64748B',
-    fontWeight: '700',
-    fontSize: 12,
-  },
-  shareBtn: {
-    flex: 1,
-    backgroundColor: '#EEF2FF',
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-  },
-  shareBtnText: {
     color: '#4F46E5',
-    fontWeight: '700',
-    fontSize: 12,
   },
-  playBtn: {
-    flex: 1.5,
+  gridCard: {
+    alignSelf: 'center',
+    padding: GRID_PADDING,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 16,
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    marginVertical: 4,
+  },
+  row: {
+    flexDirection: 'row',
+  },
+  cell: {
+    width: CELL_SIZE,
+    height: CELL_SIZE,
+    borderRadius: 8,
+    margin: 1,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  wallCell: {
+    backgroundColor: '#CBD5E1',
+    borderColor: '#94A3B8',
+  },
+  doorCell: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#F59E0B',
+  },
+  cellEmoji: {
+    fontSize: CELL_SIZE * 0.45,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#475569',
+    marginTop: 8,
+    marginBottom: 6,
+  },
+  blocksToggleRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  blockToggleChip: {
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#CBD5E1',
+  },
+  blockToggleChipActive: {
     backgroundColor: '#10B981',
-    paddingVertical: 10,
+    borderColor: '#059669',
+  },
+  blockToggleText: {
+    fontSize: 10,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  blockToggleTextActive: {
+    color: '#FFFFFF',
+  },
+  actionButtons: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 14,
+  },
+  btn: {
+    flex: 1,
+    height: 40,
     borderRadius: 12,
     alignItems: 'center',
+    justifyContent: 'center',
   },
-  playBtnText: {
+  testBtn: {
+    backgroundColor: '#4F46E5',
+  },
+  exportBtn: {
+    backgroundColor: '#F1F5F9',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  resetBtn: {
+    backgroundColor: '#FEE2E2',
+  },
+  btnTextWhite: {
     color: '#FFFFFF',
+    fontSize: 12,
     fontWeight: '800',
-    fontSize: 13,
+  },
+  btnTextDark: {
+    color: '#334155',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  btnTextRed: {
+    color: '#DC2626',
+    fontSize: 12,
+    fontWeight: '800',
   },
 });

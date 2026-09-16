@@ -62,7 +62,6 @@ export default function App() {
 
               {/* Sağ Aksiyon Kapsülleri */}
               <View style={styles.navActions}>
-                {/* Yıldız Bakiyesi & Karakter Mağazası */}
                 <TouchableOpacity
                   style={styles.starBadge}
                   onPress={() => setShopOpen(true)}
@@ -72,7 +71,6 @@ export default function App() {
                   <Text style={styles.starBadgeText}>{totalStars}</Text>
                 </TouchableOpacity>
 
-                {/* Başarımlar */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setAchievementsOpen(true)}
@@ -81,7 +79,6 @@ export default function App() {
                   <Text style={styles.iconButtonEmoji}>🏆</Text>
                 </TouchableOpacity>
 
-                {/* Tema Değiştirici */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setShowThemeModal(true)}
@@ -90,7 +87,6 @@ export default function App() {
                   <Text style={styles.iconButtonEmoji}>🎨</Text>
                 </TouchableOpacity>
 
-                {/* Canlı Kod */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setShowCode(true)}
@@ -99,7 +95,7 @@ export default function App() {
                   <Text style={styles.iconButtonEmoji}>💻</Text>
                 </TouchableOpacity>
 
-                {/* Atölye */}
+                {/* Atölye / Studio */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setEditorOpen(true)}

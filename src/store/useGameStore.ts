@@ -208,8 +208,9 @@ export const useGameStore = create<GameState>((set, get) => {
           set({ unlockedAchievements: JSON.parse(savedAchs) });
         }
 
-        if (savedTheme === 'CLASSIC' || savedTheme === 'NATURE' || savedTheme === 'SPACE') {
-          set({ selectedTheme: savedTheme });
+        const validThemes = ['CLASSIC', 'NATURE', 'SPACE', 'DESERT', 'ARCTIC', 'CANDY'];
+        if (savedTheme && validThemes.includes(savedTheme)) {
+          set({ selectedTheme: savedTheme as ThemeId });
         }
       } catch {}
     },

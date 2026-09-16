@@ -1,5 +1,5 @@
 import React from 'react';
-import { Modal, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import { Modal, View, Text, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import { useGameStore } from '../../store/useGameStore';
 import { THEMES, ThemeId } from '../../core/themes';
 
@@ -23,12 +23,15 @@ export const ThemeModal: React.FC<Props> = ({ visible, onClose }) => {
             <Text style={styles.title}>
               {language === 'tr' ? '🎨 Zemin Teması' : '🎨 Grid Theme'}
             </Text>
-            <TouchableOpacity onPress={onClose}>
+            <TouchableOpacity onPress={onClose} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.closeBtn}>✕</Text>
             </TouchableOpacity>
           </View>
 
-          <View style={styles.themeList}>
+          <ScrollView
+            contentContainerStyle={styles.themeList}
+            showsVerticalScrollIndicator={false}
+          >
             {themeList.map((t) => {
               const isSelected = selectedTheme === t.id;
               return (
@@ -59,7 +62,7 @@ export const ThemeModal: React.FC<Props> = ({ visible, onClose }) => {
                 </TouchableOpacity>
               );
             })}
-          </View>
+          </ScrollView>
         </View>
       </View>
     </Modal>
@@ -80,6 +83,7 @@ const styles = StyleSheet.create({
     padding: 16,
     width: '100%',
     maxWidth: 320,
+    maxHeight: '75%',
     gap: 12,
   },
   header: {
@@ -100,6 +104,7 @@ const styles = StyleSheet.create({
   },
   themeList: {
     gap: 8,
+    paddingVertical: 2,
   },
   themeOption: {
     flexDirection: 'row',
