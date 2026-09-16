@@ -8,6 +8,7 @@ import Animated, {
 import { useGameStore } from '../../store/useGameStore';
 import { LEVELS } from '../../core/levels';
 import { Direction } from '../../core/types';
+import { THEMES } from '../../core/themes';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const GRID_PADDING = 12;
@@ -35,8 +36,10 @@ export const GameGrid = () => {
   const collectedKeys = useGameStore((s) => s.collectedKeys);
   const openedDoors = useGameStore((s) => s.openedDoors);
   const selectedSkin = useGameStore((s) => s.selectedSkin);
+  const selectedTheme = useGameStore((s) => s.selectedTheme);
 
   const level = LEVELS[currentLevelIndex] || LEVELS[0];
+  const theme = THEMES[selectedTheme] || THEMES.CLASSIC;
 
   const posX = useSharedValue(character.x * CELL_SIZE);
   const posY = useSharedValue(character.y * CELL_SIZE);
@@ -62,9 +65,13 @@ export const GameGrid = () => {
   const activeIcon = SKIN_ICONS[selectedSkin] || '🤖';
 
   return (
-    <View style={styles.boardContainer}>
+    <View
+      style={[
+        styles.boardContainer,
+        { backgroundColor: theme.boardBg, borderColor: theme.boardBorder },
+      ]}
+    >
       <View style={styles.gridWrapper}>
-        {/* 5x5 Izgara Hücreleri */}
         {Array.from({ length: 5 }).map((_, r) => (
           <View key={`row_${r}`} style={styles.row}>
             {Array.from({ length: 5 }).map((_, c) => {
@@ -92,15 +99,32 @@ export const GameGrid = () => {
                   !openedDoors.some((od) => od.x === c && od.y === r)
               );
 
+              const isAlternate = (r + c) % 2 === 1;
+
               return (
                 <View
                   key={`cell_${c}_${r}`}
                   style={[
                     styles.cell,
-                    (r + c) % 2 === 1 && styles.cellAlternate,
-                    isWall && styles.wallCell,
-                    isDoor && styles.doorCell,
-                    isTarget && styles.targetCell,
+                    {
+                      backgroundColor: isAlternate ? theme.cellAltBg : theme.cellBg,
+                      borderColor: theme.cellBorder,
+                    },
+                    isWall && {
+                      backgroundColor: theme.wallBg,
+                      borderColor: theme.wallBorder,
+                      borderBottomColor: theme.wallShadow,
+                      borderBottomWidth: 3,
+                    },
+                    isDoor && {
+                      backgroundColor: theme.doorBg,
+                      borderColor: theme.doorBorder,
+                      borderBottomWidth: 3,
+                    },
+                    isTarget && {
+                      backgroundColor: theme.targetBg,
+                      borderColor: theme.targetBorder,
+                    },
                   ]}
                 >
                   {isWall && <Text style={styles.wallEmoji}>🧱</Text>}
@@ -114,7 +138,6 @@ export const GameGrid = () => {
           </View>
         ))}
 
-        {/* Karakter Katmanı */}
         <Animated.View
           style={[
             styles.characterContainer,
@@ -134,15 +157,13 @@ export const GameGrid = () => {
 const styles = StyleSheet.create({
   boardContainer: {
     padding: GRID_PADDING,
-    backgroundColor: '#FFFFFF',
     borderRadius: 24,
     shadowColor: '#64748B',
     shadowOpacity: 0.12,
     shadowRadius: 16,
     shadowOffset: { width: 0, height: 6 },
     elevation: 5,
-    borderWidth: 1,
-    borderColor: '#E2E8F0',
+    borderWidth: 1.5,
   },
   gridWrapper: {
     position: 'relative',
@@ -153,32 +174,11 @@ const styles = StyleSheet.create({
   cell: {
     width: CELL_SIZE,
     height: CELL_SIZE,
-    backgroundColor: '#F8FAFC',
     borderRadius: 12,
     margin: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: '#F1F5F9',
-  },
-  cellAlternate: {
-    backgroundColor: '#F1F5F9',
-  },
-  wallCell: {
-    backgroundColor: '#E2E8F0',
-    borderColor: '#CBD5E1',
-    borderBottomWidth: 3,
-    borderBottomColor: '#94A3B8',
-  },
-  doorCell: {
-    backgroundColor: '#FEF3C7',
-    borderColor: '#FDE68A',
-    borderBottomWidth: 3,
-    borderBottomColor: '#D97706',
-  },
-  targetCell: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#A7F3D0',
   },
   wallEmoji: {
     fontSize: CELL_SIZE * 0.44,

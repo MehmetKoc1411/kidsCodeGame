@@ -6,6 +6,7 @@ import { sounds } from '../core/soundManager';
 import { haptics } from '../core/hapticManager';
 import { Language } from '../core/translations';
 import { CHARACTER_SKINS } from '../core/skins';
+import { ThemeId } from '../core/themes';
 
 const STORAGE_KEY = '@kids_code_completed_levels';
 const LANG_STORAGE_KEY = '@kids_code_language';
@@ -13,6 +14,7 @@ const SKINS_STORAGE_KEY = '@kids_code_unlocked_skins';
 const SELECTED_SKIN_KEY = '@kids_code_selected_skin';
 const TOTAL_STARS_KEY = '@kids_code_total_stars';
 const ACHIEVEMENTS_STORAGE_KEY = '@kids_code_achievements';
+const THEME_STORAGE_KEY = '@kids_code_selected_theme';
 
 interface FlattenedStep {
   blockId: string;
@@ -32,17 +34,25 @@ interface GameState {
   earnedScoreStars: number;
   language: Language;
 
+  // Tema Yönetimi
+  selectedTheme: ThemeId;
+
+  // Mağaza & Kostüm Durumları
   totalStars: number;
   unlockedSkins: string[];
   selectedSkin: string;
   isShopOpen: boolean;
 
+  // Başarımlar
   unlockedAchievements: string[];
   isAchievementsOpen: boolean;
 
+  // Adım Adım Yürütme (Debugger)
   debugSteps: FlattenedStep[];
   currentDebugIndex: number;
 
+  // Eylemler
+  setTheme: (theme: ThemeId) => void;
   setLanguage: (lang: Language) => void;
   setShopOpen: (open: boolean) => void;
   setAchievementsOpen: (open: boolean) => void;
@@ -90,6 +100,7 @@ export const useGameStore = create<GameState>((set, get) => {
     status: 'IDLE',
     earnedScoreStars: 3,
     language: 'tr',
+    selectedTheme: 'CLASSIC',
 
     totalStars: 0,
     unlockedSkins: ['ROBOT'],
@@ -101,6 +112,12 @@ export const useGameStore = create<GameState>((set, get) => {
 
     debugSteps: [],
     currentDebugIndex: 0,
+
+    setTheme: (theme) => {
+      haptics.triggerDrop();
+      set({ selectedTheme: theme });
+      AsyncStorage.setItem(THEME_STORAGE_KEY, theme).catch(() => {});
+    },
 
     setShopOpen: (open) => set({ isShopOpen: open }),
     setAchievementsOpen: (open) => set({ isAchievementsOpen: open }),
@@ -153,7 +170,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
     loadProgress: async () => {
       try {
-        const [savedLevels, savedLang, savedStars, savedSkins, savedSelected, savedAchs] =
+        const [savedLevels, savedLang, savedStars, savedSkins, savedSelected, savedAchs, savedTheme] =
           await Promise.all([
             AsyncStorage.getItem(STORAGE_KEY),
             AsyncStorage.getItem(LANG_STORAGE_KEY),
@@ -161,6 +178,7 @@ export const useGameStore = create<GameState>((set, get) => {
             AsyncStorage.getItem(SKINS_STORAGE_KEY),
             AsyncStorage.getItem(SELECTED_SKIN_KEY),
             AsyncStorage.getItem(ACHIEVEMENTS_STORAGE_KEY),
+            AsyncStorage.getItem(THEME_STORAGE_KEY),
           ]);
 
         if (savedLevels) {
@@ -188,6 +206,10 @@ export const useGameStore = create<GameState>((set, get) => {
 
         if (savedAchs) {
           set({ unlockedAchievements: JSON.parse(savedAchs) });
+        }
+
+        if (savedTheme === 'CLASSIC' || savedTheme === 'NATURE' || savedTheme === 'SPACE') {
+          set({ selectedTheme: savedTheme });
         }
       } catch {}
     },
@@ -275,7 +297,6 @@ export const useGameStore = create<GameState>((set, get) => {
       });
     },
 
-    // Adım Adım Yürütme (Debug)
     stepNext: async () => {
       const {
         workspaceBlocks,
@@ -402,13 +423,11 @@ export const useGameStore = create<GameState>((set, get) => {
         currentDebugIndex: currentDebugIndex + 1,
       });
 
-      // Bitiş Kontrolü
       if (currentPos.x === level.target.x && currentPos.y === level.target.y) {
         sounds.play('WIN');
         haptics.triggerSuccess();
         unlockAchievement('FIRST_STEP');
 
-        // Biten seviyeyi anında tamamlananlara ekle
         const updatedCompleted = Array.from(new Set([...completedLevels, level.id]));
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCompleted)).catch(() => {});
 
@@ -420,7 +439,6 @@ export const useGameStore = create<GameState>((set, get) => {
       }
     },
 
-    // Otomatik Çalıştırma Motoru
     runCode: async () => {
       const {
         workspaceBlocks,
@@ -557,13 +575,10 @@ export const useGameStore = create<GameState>((set, get) => {
         haptics.triggerSuccess();
         unlockAchievement('FIRST_STEP');
 
-        // Biten mevcut seviyeyi anında tamamlananlara ekle
         const updatedCompleted = Array.from(new Set([...completedLevels, level.id]));
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCompleted)).catch(() => {});
 
-        // Yıldız Puanı: Doğrudan toplanan yıldız sayısına endeksli
         const starsWon = Math.max(1, starsCollected.length);
-
         const newTotal = get().totalStars + starsWon;
         if (newTotal >= 15) {
           unlockAchievement('STAR_COLLECTOR');

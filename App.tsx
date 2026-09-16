@@ -8,6 +8,8 @@ import { PlayControls } from './src/components/controls/PlayControls';
 import { VictoryModal } from './src/components/modals/VictoryModal';
 import { LevelEditorModal } from './src/components/editor/LevelEditorModal';
 import { ShopModal } from './src/components/modals/ShopModal';
+import { ThemeModal } from './src/components/modals/ThemeModal';
+import { AchievementsModal } from './src/components/modals/AchievementsModal';
 import { CodePreviewModal } from './src/components/workspace/CodePreviewModal';
 import { useGameStore } from './src/store/useGameStore';
 import { useEditorStore } from './src/store/useEditorStore';
@@ -16,6 +18,8 @@ import { TRANSLATIONS } from './src/core/translations';
 
 export default function App() {
   const [showCode, setShowCode] = useState(false);
+  const [showThemeModal, setShowThemeModal] = useState(false);
+
   const currentLevelIndex = useGameStore((s) => s.currentLevelIndex);
   const completedLevels = useGameStore((s) => s.completedLevels);
   const language = useGameStore((s) => s.language);
@@ -23,6 +27,7 @@ export default function App() {
   const setLanguage = useGameStore((s) => s.setLanguage);
   const loadProgress = useGameStore((s) => s.loadProgress);
   const setShopOpen = useGameStore((s) => s.setShopOpen);
+  const setAchievementsOpen = useGameStore((s) => s.setAchievementsOpen);
   const setEditorOpen = useEditorStore((s) => s.setEditorOpen);
 
   const currentLevel = LEVELS[currentLevelIndex] || LEVELS[0];
@@ -57,6 +62,7 @@ export default function App() {
 
               {/* Sağ Aksiyon Kapsülleri */}
               <View style={styles.navActions}>
+                {/* Yıldız Bakiyesi & Karakter Mağazası */}
                 <TouchableOpacity
                   style={styles.starBadge}
                   onPress={() => setShopOpen(true)}
@@ -66,6 +72,25 @@ export default function App() {
                   <Text style={styles.starBadgeText}>{totalStars}</Text>
                 </TouchableOpacity>
 
+                {/* Başarımlar */}
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setAchievementsOpen(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.iconButtonEmoji}>🏆</Text>
+                </TouchableOpacity>
+
+                {/* Tema Değiştirici */}
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setShowThemeModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.iconButtonEmoji}>🎨</Text>
+                </TouchableOpacity>
+
+                {/* Canlı Kod */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setShowCode(true)}
@@ -74,6 +99,7 @@ export default function App() {
                   <Text style={styles.iconButtonEmoji}>💻</Text>
                 </TouchableOpacity>
 
+                {/* Atölye */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setEditorOpen(true)}
@@ -82,6 +108,7 @@ export default function App() {
                   <Text style={styles.iconButtonEmoji}>🛠️</Text>
                 </TouchableOpacity>
 
+                {/* Dil */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
@@ -116,9 +143,13 @@ export default function App() {
                           currentLevelIndex: index,
                           character: { ...lvl.start },
                           collectedStars: [],
+                          collectedKeys: [],
+                          openedDoors: [],
                           workspaceBlocks: [],
                           activeBlockId: null,
                           status: 'IDLE',
+                          debugSteps: [],
+                          currentDebugIndex: 0,
                         });
                       }}
                       activeOpacity={0.7}
@@ -158,6 +189,8 @@ export default function App() {
           <VictoryModal />
           <LevelEditorModal />
           <ShopModal />
+          <ThemeModal visible={showThemeModal} onClose={() => setShowThemeModal(false)} />
+          <AchievementsModal />
           <CodePreviewModal visible={showCode} onClose={() => setShowCode(false)} />
         </SafeAreaView>
       </SafeAreaProvider>
@@ -186,66 +219,66 @@ const styles = StyleSheet.create({
   },
   levelInfo: {
     flex: 1,
-    marginRight: 8,
+    marginRight: 6,
   },
   levelPill: {
     alignSelf: 'flex-start',
     backgroundColor: '#EEF2FF',
-    paddingHorizontal: 8,
+    paddingHorizontal: 7,
     paddingVertical: 2,
-    borderRadius: 8,
+    borderRadius: 7,
     marginBottom: 2,
   },
   levelPillText: {
-    fontSize: 11,
+    fontSize: 10,
     fontWeight: '800',
     color: '#4F46E5',
-    letterSpacing: 0.6,
+    letterSpacing: 0.5,
   },
   levelHeading: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '900',
     color: '#0F172A',
   },
   navActions: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
+    gap: 5,
   },
   starBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: '#FEF3C7',
-    paddingHorizontal: 8,
-    paddingVertical: 6,
-    borderRadius: 12,
+    paddingHorizontal: 7,
+    paddingVertical: 5,
+    borderRadius: 11,
     borderWidth: 1.5,
     borderColor: '#FDE68A',
-    gap: 4,
+    gap: 3,
   },
   starBadgeIcon: {
-    fontSize: 12,
+    fontSize: 11,
   },
   starBadgeText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
     color: '#B45309',
   },
   iconButton: {
-    width: 36,
-    height: 36,
+    width: 34,
+    height: 34,
     backgroundColor: '#FFFFFF',
-    borderRadius: 12,
+    borderRadius: 11,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
   iconButtonEmoji: {
-    fontSize: 15,
+    fontSize: 14,
   },
   langText: {
-    fontSize: 12,
+    fontSize: 11,
     fontWeight: '900',
     color: '#475569',
   },
