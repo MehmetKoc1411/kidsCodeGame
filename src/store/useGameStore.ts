@@ -28,7 +28,7 @@ interface GameState {
   collectedStars: Position[];
   collectedKeys: Position[];
   openedDoors: Position[];
-  activePlates: Position[]; // 🔘 Aktifleşen basınç plakaları
+  activePlates: Position[];
   workspaceBlocks: CodeBlock[];
   activeBlockId: string | null;
   status: GameStatus;
@@ -84,6 +84,24 @@ const getNextPosition = (pos: Position, dir: Direction): Position => {
     case 'LEFT': return { x: pos.x - 1, y: pos.y };
     case 'RIGHT': return { x: pos.x + 1, y: pos.y };
   }
+};
+
+const calculateStarsEarned = (
+  collectedStarsCount: number,
+  totalStarsInLevel: number,
+  blocksCount: number,
+  maxTargetBlocks: number
+): number => {
+  let score = 1; // 1. Yıldız: Bayrağa başarıyla ulaştı
+  if (totalStarsInLevel > 0 && collectedStarsCount === totalStarsInLevel) {
+    score++; // 2. Yıldız: Haritadaki tüm yıldızları topladı
+  } else if (totalStarsInLevel === 0) {
+    score++;
+  }
+  if (blocksCount <= maxTargetBlocks) {
+    score++; // 3. Yıldız: Hedef blok sınırında veya altında bitirdi (Optimizasyon Ustası)
+  }
+  return Math.min(3, Math.max(1, score));
 };
 
 export const useGameStore = create<GameState>((set, get) => {
@@ -219,7 +237,7 @@ export const useGameStore = create<GameState>((set, get) => {
 
     addBlock: (type) => {
       haptics.triggerDrop();
-      const isContainer = type === 'REPEAT' || type === 'IF_WALL';
+      const isContainer = type === 'REPEAT' || type === 'IF_WALL' || type === 'FUNCTION';
       const newBlock: CodeBlock = {
         id: `${type}_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
         type,
@@ -323,6 +341,8 @@ export const useGameStore = create<GameState>((set, get) => {
       if (steps.length === 0) {
         if (workspaceBlocks.length === 0) return;
 
+        const funcBlock = workspaceBlocks.find((b) => b.type === 'FUNCTION');
+
         const flatten = (blocks: CodeBlock[]): FlattenedStep[] => {
           const list: FlattenedStep[] = [];
           blocks.forEach((b) => {
@@ -335,12 +355,15 @@ export const useGameStore = create<GameState>((set, get) => {
               }
             } else if (b.type === 'IF_WALL' && b.children) {
               list.push(...flatten(b.children));
+            } else if (b.type === 'CALL_FUNCTION' && funcBlock && funcBlock.children) {
+              list.push(...flatten(funcBlock.children));
             }
           });
           return list;
         };
 
-        steps = flatten(workspaceBlocks);
+        const mainBlocks = workspaceBlocks.filter((b) => b.type !== 'FUNCTION');
+        steps = flatten(mainBlocks);
         set({ debugSteps: steps, currentDebugIndex: 0 });
       }
 
@@ -392,7 +415,6 @@ export const useGameStore = create<GameState>((set, get) => {
           }
         }
 
-        // 🚧 Kapalı Bariyer Kontrolü
         const barrierTrigger = level.triggers?.find((t) => t.barrier.x === next.x && t.barrier.y === next.y);
         if (barrierTrigger) {
           const isBarrierOpen = newPlates.some(
@@ -417,7 +439,6 @@ export const useGameStore = create<GameState>((set, get) => {
         currentPos.y = next.y;
         sounds.play('STEP');
 
-        // 🔘 Basınç Plakasına Basıldı mı?
         const plateTrigger = level.triggers?.find(
           (t) => t.plate.x === currentPos.x && t.plate.y === currentPos.y
         );
@@ -427,7 +448,6 @@ export const useGameStore = create<GameState>((set, get) => {
           haptics.triggerStar();
         }
 
-        // 🌀 Portal Kontrolü
         const portal = level.portals?.find(
           (p) =>
             (p.entry.x === currentPos.x && p.entry.y === currentPos.y) ||
@@ -443,7 +463,7 @@ export const useGameStore = create<GameState>((set, get) => {
         }
 
         const keyHit = level.keys?.find(
-          (k) => k.x === currentPos.x && k.y === currentPos.y && !newKeys.some((ck) => ck.x === k.x && ck.y === k.y)
+          (k) => k.x === next.x && k.y === next.y && !newKeys.some((ck) => ck.x === k.x && ck.y === k.y)
         );
         if (keyHit) {
           newKeys.push(keyHit);
@@ -452,7 +472,7 @@ export const useGameStore = create<GameState>((set, get) => {
         }
 
         const starHit = level.stars.find(
-          (s) => s.x === currentPos.x && s.y === currentPos.y && !newStars.some((c) => c.x === s.x && c.y === s.y)
+          (s) => s.x === next.x && s.y === next.y && !newStars.some((c) => c.x === s.x && c.y === s.y)
         );
         if (starHit) {
           newStars.push(starHit);
@@ -475,12 +495,28 @@ export const useGameStore = create<GameState>((set, get) => {
         haptics.triggerSuccess();
         unlockAchievement('FIRST_STEP');
 
+        const countBlocks = (blocks: CodeBlock[]): number => {
+          return blocks.reduce((acc, b) => acc + 1 + (b.children ? countBlocks(b.children) : 0), 0);
+        };
+
+        const totalUsed = countBlocks(workspaceBlocks);
+        const earnedStars = calculateStarsEarned(
+          newStars.length,
+          level.stars.length,
+          totalUsed,
+          level.maxBlocks
+        );
+
         const updatedCompleted = Array.from(new Set([...completedLevels, level.id]));
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCompleted)).catch(() => {});
 
+        const newTotalStars = get().totalStars + earnedStars;
+        AsyncStorage.setItem(TOTAL_STARS_KEY, newTotalStars.toString()).catch(() => {});
+
         set({
           status: 'SUCCESS',
-          earnedScoreStars: Math.max(1, newStars.length),
+          earnedScoreStars: earnedStars,
+          totalStars: newTotalStars,
           completedLevels: updatedCompleted,
         });
       }
@@ -507,8 +543,24 @@ export const useGameStore = create<GameState>((set, get) => {
       let doorsOpened: Position[] = [];
       let platesActivated: Position[] = [];
 
+      const funcBlock = workspaceBlocks.find((b) => b.type === 'FUNCTION');
+
       const executeBlock = async (block: CodeBlock): Promise<boolean> => {
         set({ activeBlockId: block.id });
+
+        if (block.type === 'FUNCTION') {
+          return true;
+        }
+
+        if (block.type === 'CALL_FUNCTION') {
+          if (funcBlock && funcBlock.children) {
+            for (const child of funcBlock.children) {
+              const ok = await executeBlock(child);
+              if (!ok) return false;
+            }
+          }
+          return true;
+        }
 
         if (block.type === 'REPEAT' && block.children) {
           const repeatCount = block.value || 3;
@@ -570,7 +622,6 @@ export const useGameStore = create<GameState>((set, get) => {
             }
           }
 
-          // 🚧 Kapalı Bariyer Kontrolü
           const barrierTrigger = level.triggers?.find((t) => t.barrier.x === next.x && t.barrier.y === next.y);
           if (barrierTrigger) {
             const isBarrierOpen = platesActivated.some(
@@ -595,7 +646,6 @@ export const useGameStore = create<GameState>((set, get) => {
           currentPos.y = next.y;
           sounds.play('STEP');
 
-          // 🔘 Basınç Plakası Tetikleme
           const plateTrigger = level.triggers?.find(
             (t) => t.plate.x === currentPos.x && t.plate.y === currentPos.y
           );
@@ -605,7 +655,6 @@ export const useGameStore = create<GameState>((set, get) => {
             haptics.triggerStar();
           }
 
-          // 🌀 Portal Kontrolü
           const portal = level.portals?.find(
             (p) =>
               (p.entry.x === currentPos.x && p.entry.y === currentPos.y) ||
@@ -621,7 +670,7 @@ export const useGameStore = create<GameState>((set, get) => {
           }
 
           const keyHit = level.keys?.find(
-            (k) => k.x === currentPos.x && k.y === currentPos.y && !keysCollected.some((ck) => ck.x === k.x && ck.y === k.y)
+            (k) => k.x === next.x && k.y === next.y && !keysCollected.some((ck) => ck.x === k.x && ck.y === k.y)
           );
           if (keyHit) {
             keysCollected = [...keysCollected, keyHit];
@@ -630,7 +679,7 @@ export const useGameStore = create<GameState>((set, get) => {
           }
 
           const starHit = level.stars.find(
-            (s) => s.x === currentPos.x && s.y === currentPos.y && !starsCollected.some((c) => c.x === s.x && c.y === s.y)
+            (s) => s.x === next.x && s.y === next.y && !starsCollected.some((c) => c.x === s.x && c.y === s.y)
           );
           if (starHit) {
             starsCollected = [...starsCollected, starHit];
@@ -663,21 +712,32 @@ export const useGameStore = create<GameState>((set, get) => {
         haptics.triggerSuccess();
         unlockAchievement('FIRST_STEP');
 
+        const countBlocks = (blocks: CodeBlock[]): number => {
+          return blocks.reduce((acc, b) => acc + 1 + (b.children ? countBlocks(b.children) : 0), 0);
+        };
+
+        const totalUsed = countBlocks(workspaceBlocks);
+        const earnedStars = calculateStarsEarned(
+          starsCollected.length,
+          level.stars.length,
+          totalUsed,
+          level.maxBlocks
+        );
+
         const updatedCompleted = Array.from(new Set([...completedLevels, level.id]));
         AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(updatedCompleted)).catch(() => {});
 
-        const starsWon = Math.max(1, starsCollected.length);
-        const newTotal = get().totalStars + starsWon;
-        if (newTotal >= 15) {
+        const newTotalStars = get().totalStars + earnedStars;
+        if (newTotalStars >= 15) {
           unlockAchievement('STAR_COLLECTOR');
         }
 
-        AsyncStorage.setItem(TOTAL_STARS_KEY, newTotal.toString()).catch(() => {});
+        AsyncStorage.setItem(TOTAL_STARS_KEY, newTotalStars.toString()).catch(() => {});
 
         set({
           status: 'SUCCESS',
-          earnedScoreStars: starsWon,
-          totalStars: newTotal,
+          earnedScoreStars: earnedStars,
+          totalStars: newTotalStars,
           completedLevels: updatedCompleted,
         });
       } else {

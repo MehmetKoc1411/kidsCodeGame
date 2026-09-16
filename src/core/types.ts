@@ -5,7 +5,9 @@ export type CommandType =
   | 'TURN_RIGHT'
   | 'TURN_LEFT'
   | 'REPEAT'
-  | 'IF_WALL';
+  | 'IF_WALL'
+  | 'FUNCTION'
+  | 'CALL_FUNCTION';
 
 export type GameStatus = 'IDLE' | 'RUNNING' | 'SUCCESS' | 'FAILED';
 
@@ -15,13 +17,13 @@ export interface Position {
 }
 
 export interface PortalPair {
-  entry: Position; // 🌀 Portal A
-  exit: Position;  // 🌀 Portal B
+  entry: Position;
+  exit: Position;
 }
 
 export interface TriggerPair {
-  plate: Position;   // 🔘 Basınç Plakası
-  barrier: Position; // 🚧 Açılacak Bariyer/Köprü
+  plate: Position;
+  barrier: Position;
 }
 
 export interface CodeBlock {
@@ -42,7 +44,7 @@ export interface LevelConfig {
   doors?: Position[];
   keys?: Position[];
   portals?: PortalPair[];
-  triggers?: TriggerPair[]; // 🔘 41-50 Seviyeleri için Tetikleyici Mekaniği
+  triggers?: TriggerPair[];
   availableBlocks: CommandType[];
   maxBlocks: number;
 }

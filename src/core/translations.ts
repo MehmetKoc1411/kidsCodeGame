@@ -1,58 +1,86 @@
 export type Language = 'tr' | 'en';
 
-export const TRANSLATIONS = {
+export interface TranslationStrings {
+  levelPrefix: string;
+  runCode: string;
+  running: string; // <-- EKLENDİ
+  stepNext: string;
+  reset: string;
+  clear: string;
+  blocksLeft: string;
+  availablePalette: string;
+  workspaceTitle: string;
+  emptyWorkspaceHint: string;
+  cmdForward: string;
+  cmdTurnRight: string;
+  cmdTurnLeft: string;
+  cmdRepeat: string;
+  cmdIfWall: string;
+  cmdFunction: string;
+  cmdCallFunction: string;
+  addChildHint: string;
+  victoryTitle: string;
+  victoryDesc: string;
+  nextLevel: string;
+  replay: string;
+  shopTitle: string;
+  achievementsTitle: string;
+  themeTitle: string;
+}
+
+export const TRANSLATIONS: Record<Language, TranslationStrings> = {
   tr: {
-    levelPrefix: 'BÖLÜM',
-    codeSequence: 'KOD DİZİLİMİ',
-    dragHint: 'Sürükleyin veya dokunun',
-    emptyWorkspace: 'Komutları buraya sürükleyip bırakın...',
-    commandPalette: 'KOMUT BLOKLARI',
-    runCode: '▶ Kodu Çalıştır',
-    running: '⏳ Çalışıyor...',
-    reset: 'Yenile',
-    clear: 'Sil',
-    viewCode: '💻 Canlı Kodu Gör (JS / Python)',
-    codeTitle: '💻 Gerçek Kod Görünümü',
-    close: 'Kapat',
-    congrats: '🎉 TEBRİKLER!',
-    replay: 'Tekrar Dene',
-    nextLevel: 'Sonraki Bölüm ➜',
-    msg3Star: 'Mükemmel! En verimli kodla tüm yıldızları topladın!',
-    msg2Star: 'Çok iyi! Hedefe ulaştın ve harika bir iş çıkardın.',
-    msg1Star: 'Bölümü geçtin! Daha az blok kullanarak 3 yıldız almayı dene.',
-    blocks: {
-      FORWARD: 'İleri',
-      TURN_RIGHT: 'Sağa',
-      TURN_LEFT: 'Sola',
-      REPEAT: '3x Döngü',
-      IF_WALL: 'Engel Varsa',
-    },
+    levelPrefix: 'Bölüm',
+    runCode: 'Kodu Çalıştır',
+    running: 'Çalışıyor...', // <-- EKLENDİ
+    stepNext: 'Adım At',
+    reset: 'Sıfırla',
+    clear: 'Temizle',
+    blocksLeft: 'Kalan Blok Sınırı',
+    availablePalette: 'Komut Paleti',
+    workspaceTitle: 'Algoritma Alanı',
+    emptyWorkspaceHint: 'Aşağıdaki komut paletinden blok ekleyerek kodunuzu yazın.',
+    cmdForward: 'İLERİ GİT',
+    cmdTurnRight: 'SAĞA DÖN',
+    cmdTurnLeft: 'SOLA DÖN',
+    cmdRepeat: 'TEKRARLA (Döngü)',
+    cmdIfWall: 'EĞER ÖNÜNDE DUVAR VARSA',
+    cmdFunction: 'FONKSİYON (F1)',
+    cmdCallFunction: 'ÇALIŞTIR: F1()',
+    addChildHint: '+ İçine Komut Ekle',
+    victoryTitle: 'Harika İş Çıkardın!',
+    victoryDesc: 'Bölümü başarıyla tamamladın.',
+    nextLevel: 'Sonraki Bölüm',
+    replay: 'Yeniden Oyna',
+    shopTitle: 'Karakter Mağazası',
+    achievementsTitle: 'Başarımlar & Rozetler',
+    themeTitle: 'Zemin Teması',
   },
   en: {
-    levelPrefix: 'LEVEL',
-    codeSequence: 'CODE SEQUENCE',
-    dragHint: 'Drag or tap to add',
-    emptyWorkspace: 'Drag and drop commands here...',
-    commandPalette: 'COMMAND BLOCKS',
-    runCode: '▶ Run Code',
-    running: '⏳ Running...',
+    levelPrefix: 'Level',
+    runCode: 'Run Code',
+    running: 'Running...', // <-- EKLENDİ
+    stepNext: 'Step Forward',
     reset: 'Reset',
     clear: 'Clear',
-    viewCode: '💻 View Live Code (JS / Python)',
-    codeTitle: '💻 Source Code Preview',
-    close: 'Close',
-    congrats: '🎉 AWESOME JOB!',
-    replay: 'Try Again',
-    nextLevel: 'Next Level ➜',
-    msg3Star: 'Perfect! All stars collected with optimal code!',
-    msg2Star: 'Great job! Target reached with good logic.',
-    msg1Star: 'Level cleared! Try using fewer blocks for 3 stars.',
-    blocks: {
-      FORWARD: 'Forward',
-      TURN_RIGHT: 'Turn Right',
-      TURN_LEFT: 'Turn Left',
-      REPEAT: '3x Loop',
-      IF_WALL: 'If Obstacle',
-    },
+    blocksLeft: 'Blocks Left',
+    availablePalette: 'Command Palette',
+    workspaceTitle: 'Workspace',
+    emptyWorkspaceHint: 'Tap blocks from the palette below to build your algorithm.',
+    cmdForward: 'MOVE FORWARD',
+    cmdTurnRight: 'TURN RIGHT',
+    cmdTurnLeft: 'TURN LEFT',
+    cmdRepeat: 'REPEAT (Loop)',
+    cmdIfWall: 'IF WALL AHEAD',
+    cmdFunction: 'FUNCTION (F1)',
+    cmdCallFunction: 'CALL: F1()',
+    addChildHint: '+ Add Child Block',
+    victoryTitle: 'Awesome Job!',
+    victoryDesc: 'You solved this puzzle successfully.',
+    nextLevel: 'Next Level',
+    replay: 'Play Again',
+    shopTitle: 'Character Shop',
+    achievementsTitle: 'Achievements',
+    themeTitle: 'Grid Theme',
   },
 };
