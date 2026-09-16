@@ -19,11 +19,16 @@ export interface PortalPair {
   exit: Position;  // 🌀 Portal B
 }
 
+export interface TriggerPair {
+  plate: Position;   // 🔘 Basınç Plakası
+  barrier: Position; // 🚧 Açılacak Bariyer/Köprü
+}
+
 export interface CodeBlock {
   id: string;
   type: CommandType;
-  value?: number; // REPEAT döngü sayısı için
-  children?: CodeBlock[]; // İç içe komutlar için (REPEAT veya IF)
+  value?: number;
+  children?: CodeBlock[];
 }
 
 export interface LevelConfig {
@@ -36,7 +41,8 @@ export interface LevelConfig {
   stars: Position[];
   doors?: Position[];
   keys?: Position[];
-  portals?: PortalPair[]; // 🌀 31-40 Seviyeleri için Portal Mekaniği
+  portals?: PortalPair[];
+  triggers?: TriggerPair[]; // 🔘 41-50 Seviyeleri için Tetikleyici Mekaniği
   availableBlocks: CommandType[];
   maxBlocks: number;
 }

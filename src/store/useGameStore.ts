@@ -28,6 +28,7 @@ interface GameState {
   collectedStars: Position[];
   collectedKeys: Position[];
   openedDoors: Position[];
+  activePlates: Position[]; // 🔘 Aktifleşen basınç plakaları
   workspaceBlocks: CodeBlock[];
   activeBlockId: string | null;
   status: GameStatus;
@@ -95,6 +96,7 @@ export const useGameStore = create<GameState>((set, get) => {
     collectedStars: [],
     collectedKeys: [],
     openedDoors: [],
+    activePlates: [],
     workspaceBlocks: [],
     activeBlockId: null,
     status: 'IDLE',
@@ -273,6 +275,7 @@ export const useGameStore = create<GameState>((set, get) => {
         collectedStars: [],
         collectedKeys: [],
         openedDoors: [],
+        activePlates: [],
         activeBlockId: null,
         status: 'IDLE',
         debugSteps: [],
@@ -290,6 +293,7 @@ export const useGameStore = create<GameState>((set, get) => {
         collectedStars: [],
         collectedKeys: [],
         openedDoors: [],
+        activePlates: [],
         workspaceBlocks: [],
         activeBlockId: null,
         status: 'IDLE',
@@ -306,6 +310,7 @@ export const useGameStore = create<GameState>((set, get) => {
         collectedStars,
         collectedKeys,
         openedDoors,
+        activePlates,
         debugSteps,
         currentDebugIndex,
         completedLevels,
@@ -352,6 +357,7 @@ export const useGameStore = create<GameState>((set, get) => {
       let newStars = [...collectedStars];
       let newKeys = [...collectedKeys];
       let newDoors = [...openedDoors];
+      let newPlates = [...activePlates];
 
       if (step.type === 'TURN_LEFT' || step.type === 'TURN_RIGHT') {
         currentPos.direction = getNextDirection(
@@ -386,6 +392,20 @@ export const useGameStore = create<GameState>((set, get) => {
           }
         }
 
+        // 🚧 Kapalı Bariyer Kontrolü
+        const barrierTrigger = level.triggers?.find((t) => t.barrier.x === next.x && t.barrier.y === next.y);
+        if (barrierTrigger) {
+          const isBarrierOpen = newPlates.some(
+            (p) => p.x === barrierTrigger.plate.x && p.y === barrierTrigger.plate.y
+          );
+          if (!isBarrierOpen) {
+            sounds.play('FAIL');
+            haptics.triggerError();
+            set({ status: 'FAILED', activeBlockId: null });
+            return;
+          }
+        }
+
         if (isOutOfBounds || isHitWall) {
           sounds.play('FAIL');
           haptics.triggerError();
@@ -396,6 +416,16 @@ export const useGameStore = create<GameState>((set, get) => {
         currentPos.x = next.x;
         currentPos.y = next.y;
         sounds.play('STEP');
+
+        // 🔘 Basınç Plakasına Basıldı mı?
+        const plateTrigger = level.triggers?.find(
+          (t) => t.plate.x === currentPos.x && t.plate.y === currentPos.y
+        );
+        if (plateTrigger && !newPlates.some((p) => p.x === plateTrigger.plate.x && p.y === plateTrigger.plate.y)) {
+          newPlates.push(plateTrigger.plate);
+          sounds.play('STAR');
+          haptics.triggerStar();
+        }
 
         // 🌀 Portal Kontrolü
         const portal = level.portals?.find(
@@ -436,6 +466,7 @@ export const useGameStore = create<GameState>((set, get) => {
         collectedStars: newStars,
         collectedKeys: newKeys,
         openedDoors: newDoors,
+        activePlates: newPlates,
         currentDebugIndex: currentDebugIndex + 1,
       });
 
@@ -474,6 +505,7 @@ export const useGameStore = create<GameState>((set, get) => {
       let starsCollected: Position[] = [];
       let keysCollected: Position[] = [];
       let doorsOpened: Position[] = [];
+      let platesActivated: Position[] = [];
 
       const executeBlock = async (block: CodeBlock): Promise<boolean> => {
         set({ activeBlockId: block.id });
@@ -538,6 +570,20 @@ export const useGameStore = create<GameState>((set, get) => {
             }
           }
 
+          // 🚧 Kapalı Bariyer Kontrolü
+          const barrierTrigger = level.triggers?.find((t) => t.barrier.x === next.x && t.barrier.y === next.y);
+          if (barrierTrigger) {
+            const isBarrierOpen = platesActivated.some(
+              (p) => p.x === barrierTrigger.plate.x && p.y === barrierTrigger.plate.y
+            );
+            if (!isBarrierOpen) {
+              sounds.play('FAIL');
+              haptics.triggerError();
+              set({ status: 'FAILED', activeBlockId: null });
+              return false;
+            }
+          }
+
           if (isOutOfBounds || isHitWall) {
             sounds.play('FAIL');
             haptics.triggerError();
@@ -548,6 +594,16 @@ export const useGameStore = create<GameState>((set, get) => {
           currentPos.x = next.x;
           currentPos.y = next.y;
           sounds.play('STEP');
+
+          // 🔘 Basınç Plakası Tetikleme
+          const plateTrigger = level.triggers?.find(
+            (t) => t.plate.x === currentPos.x && t.plate.y === currentPos.y
+          );
+          if (plateTrigger && !platesActivated.some((p) => p.x === plateTrigger.plate.x && p.y === plateTrigger.plate.y)) {
+            platesActivated = [...platesActivated, plateTrigger.plate];
+            sounds.play('STAR');
+            haptics.triggerStar();
+          }
 
           // 🌀 Portal Kontrolü
           const portal = level.portals?.find(
@@ -588,6 +644,7 @@ export const useGameStore = create<GameState>((set, get) => {
           collectedStars: [...starsCollected],
           collectedKeys: [...keysCollected],
           openedDoors: [...doorsOpened],
+          activePlates: [...platesActivated],
         });
 
         await new Promise((res) => setTimeout(res, 380));

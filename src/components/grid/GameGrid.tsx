@@ -35,6 +35,7 @@ export const GameGrid = () => {
   const collectedStars = useGameStore((s) => s.collectedStars);
   const collectedKeys = useGameStore((s) => s.collectedKeys);
   const openedDoors = useGameStore((s) => s.openedDoors);
+  const activePlates = useGameStore((s) => s.activePlates);
   const selectedSkin = useGameStore((s) => s.selectedSkin);
   const selectedTheme = useGameStore((s) => s.selectedTheme);
 
@@ -99,12 +100,24 @@ export const GameGrid = () => {
                   !openedDoors.some((od) => od.x === c && od.y === r)
               );
 
-              // 🌀 Portal Kontrolü
               const isPortal = level.portals?.some(
                 (p) =>
                   (p.entry.x === c && p.entry.y === r) ||
                   (p.exit.x === c && p.exit.y === r)
               );
+
+              // 🔘 Basınç Plakası & Tetiklenen Bariyer
+              const isPlate = level.triggers?.some((t) => t.plate.x === c && t.plate.y === r);
+              const isPlateActive = activePlates.some((p) => p.x === c && p.y === r);
+
+              const triggerForBarrier = level.triggers?.find((t) => t.barrier.x === c && t.barrier.y === r);
+              const isBarrierActive = triggerForBarrier
+                ? activePlates.some(
+                    (p) => p.x === triggerForBarrier.plate.x && p.y === triggerForBarrier.plate.y
+                  )
+                : false;
+              const isClosedBarrier = triggerForBarrier && !isBarrierActive;
+              const isOpenBridge = triggerForBarrier && isBarrierActive;
 
               const isAlternate = (r + c) % 2 === 1;
 
@@ -128,6 +141,15 @@ export const GameGrid = () => {
                       borderColor: theme.doorBorder,
                       borderBottomWidth: 3,
                     },
+                    isClosedBarrier && {
+                      backgroundColor: '#FEE2E2',
+                      borderColor: '#FCA5A5',
+                      borderBottomWidth: 3,
+                    },
+                    isOpenBridge && {
+                      backgroundColor: '#FEF3C7',
+                      borderColor: '#FDE68A',
+                    },
                     isTarget && {
                       backgroundColor: theme.targetBg,
                       borderColor: theme.targetBorder,
@@ -138,6 +160,9 @@ export const GameGrid = () => {
                   {isDoor && <Text style={styles.doorEmoji}>🚪</Text>}
                   {isKey && <Text style={styles.keyEmoji}>🔑</Text>}
                   {isPortal && <Text style={styles.portalEmoji}>🌀</Text>}
+                  {isPlate && <Text style={styles.plateEmoji}>{isPlateActive ? '🟢' : '🔘'}</Text>}
+                  {isClosedBarrier && <Text style={styles.barrierEmoji}>🚧</Text>}
+                  {isOpenBridge && <Text style={styles.bridgeEmoji}>🪵</Text>}
                   {isStar && <Text style={styles.starEmoji}>⭐</Text>}
                   {isTarget && !isStar && <Text style={styles.targetEmoji}>🚩</Text>}
                 </View>
@@ -199,6 +224,15 @@ const styles = StyleSheet.create({
   },
   portalEmoji: {
     fontSize: CELL_SIZE * 0.48,
+  },
+  plateEmoji: {
+    fontSize: CELL_SIZE * 0.42,
+  },
+  barrierEmoji: {
+    fontSize: CELL_SIZE * 0.44,
+  },
+  bridgeEmoji: {
+    fontSize: CELL_SIZE * 0.44,
   },
   starEmoji: {
     fontSize: CELL_SIZE * 0.44,
