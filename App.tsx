@@ -1,5 +1,5 @@
-import React, { useEffect } from 'react';
-import { StyleSheet, View, Text, ScrollView, TouchableOpacity } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { StyleSheet, View, Text, ScrollView, TouchableOpacity, StatusBar } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { GameGrid } from './src/components/grid/GameGrid';
@@ -7,17 +7,22 @@ import { Workspace } from './src/components/workspace/Workspace';
 import { PlayControls } from './src/components/controls/PlayControls';
 import { VictoryModal } from './src/components/modals/VictoryModal';
 import { LevelEditorModal } from './src/components/editor/LevelEditorModal';
+import { ShopModal } from './src/components/modals/ShopModal';
+import { CodePreviewModal } from './src/components/workspace/CodePreviewModal';
 import { useGameStore } from './src/store/useGameStore';
 import { useEditorStore } from './src/store/useEditorStore';
 import { LEVELS } from './src/core/levels';
 import { TRANSLATIONS } from './src/core/translations';
 
 export default function App() {
+  const [showCode, setShowCode] = useState(false);
   const currentLevelIndex = useGameStore((s) => s.currentLevelIndex);
   const completedLevels = useGameStore((s) => s.completedLevels);
   const language = useGameStore((s) => s.language);
+  const totalStars = useGameStore((s) => s.totalStars);
   const setLanguage = useGameStore((s) => s.setLanguage);
   const loadProgress = useGameStore((s) => s.loadProgress);
+  const setShopOpen = useGameStore((s) => s.setShopOpen);
   const setEditorOpen = useEditorStore((s) => s.setEditorOpen);
 
   const currentLevel = LEVELS[currentLevelIndex] || LEVELS[0];
@@ -29,52 +34,70 @@ export default function App() {
 
   return (
     <GestureHandlerRootView style={styles.container}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F8FAFC" />
       <SafeAreaProvider>
-        <SafeAreaView style={styles.safeArea}>
+        <SafeAreaView style={styles.safeArea} edges={['top', 'left', 'right', 'bottom']}>
           <ScrollView
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
             bounces={false}
           >
-            {/* Üst Bar: Bölüm Bilgisi, Atölye Butonu ve Dil Değiştirici */}
-            <View style={styles.header}>
-              <View style={styles.topRow}>
-                <View>
-                  <Text style={styles.levelBadge}>
+            {/* Üst Navigasyon Çubuğu */}
+            <View style={styles.navBar}>
+              <View style={styles.levelInfo}>
+                <View style={styles.levelPill}>
+                  <Text style={styles.levelPillText}>
                     {t.levelPrefix} {currentLevel.id}
                   </Text>
-                  <Text style={styles.levelTitle}>{currentLevel.title}</Text>
                 </View>
-
-                {/* Sağ Üst Buton Grubu: Atölye & Dil */}
-                <View style={styles.topActionGroup}>
-                  <TouchableOpacity
-                    style={styles.editorOpenButton}
-                    onPress={() => setEditorOpen(true)}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.editorOpenButtonText}>
-                      {language === 'tr' ? '🛠️ Atölye' : '🛠️ Studio'}
-                    </Text>
-                  </TouchableOpacity>
-
-                  <TouchableOpacity
-                    style={styles.langButton}
-                    onPress={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
-                    activeOpacity={0.7}
-                  >
-                    <Text style={styles.langButtonText}>
-                      {language === 'tr' ? '🇬🇧 EN' : '🇹🇷 TR'}
-                    </Text>
-                  </TouchableOpacity>
-                </View>
+                <Text style={styles.levelHeading} numberOfLines={1}>
+                  {currentLevel.title}
+                </Text>
               </View>
 
-              {/* 20 Seviyelik Kaydırılabilir Bölüm Çubuğu */}
+              {/* Sağ Aksiyon Kapsülleri */}
+              <View style={styles.navActions}>
+                <TouchableOpacity
+                  style={styles.starBadge}
+                  onPress={() => setShopOpen(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.starBadgeIcon}>⭐</Text>
+                  <Text style={styles.starBadgeText}>{totalStars}</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setShowCode(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.iconButtonEmoji}>💻</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setEditorOpen(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.iconButtonEmoji}>🛠️</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={styles.iconButton}
+                  onPress={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
+                  activeOpacity={0.8}
+                >
+                  <Text style={styles.langText}>{language === 'tr' ? 'EN' : 'TR'}</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Yatay Bölüm Seçici Çubuğu */}
+            <View style={styles.levelSelectorContainer}>
               <ScrollView
                 horizontal
                 showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.levelSelector}
+                contentContainerStyle={styles.levelSelectorScroll}
               >
                 {LEVELS.map((lvl, index) => {
                   const isSelected = index === currentLevelIndex;
@@ -84,9 +107,9 @@ export default function App() {
                     <TouchableOpacity
                       key={lvl.id}
                       style={[
-                        styles.levelDot,
-                        isSelected && styles.levelDotActive,
-                        isCompleted && !isSelected && styles.levelDotCompleted,
+                        styles.levelChip,
+                        isSelected && styles.levelChipActive,
+                        isCompleted && !isSelected && styles.levelChipCompleted,
                       ]}
                       onPress={() => {
                         useGameStore.setState({
@@ -98,15 +121,16 @@ export default function App() {
                           status: 'IDLE',
                         });
                       }}
+                      activeOpacity={0.7}
                     >
                       <Text
                         style={[
-                          styles.levelDotText,
-                          isSelected && styles.levelDotTextActive,
-                          isCompleted && !isSelected && styles.levelDotTextCompleted,
+                          styles.levelChipText,
+                          isSelected && styles.levelChipTextActive,
+                          isCompleted && !isSelected && styles.levelChipTextCompleted,
                         ]}
                       >
-                        {isCompleted && !isSelected ? `✓ #${lvl.id}` : `#${lvl.id}`}
+                        {isCompleted && !isSelected ? `✓ ${lvl.id}` : `${lvl.id}`}
                       </Text>
                     </TouchableOpacity>
                   );
@@ -114,27 +138,27 @@ export default function App() {
               </ScrollView>
             </View>
 
-            {/* 5x5 Oyun Izgarası */}
-            <View style={styles.gridSection}>
+            {/* 5x5 Izgara */}
+            <View style={styles.boardCard}>
               <GameGrid />
             </View>
 
-            {/* Çalışma Alanı ve Komut Paleti */}
-            <View style={styles.workspaceSection}>
+            {/* Kod Dizilimi ve Komut Blokları */}
+            <View style={styles.workspaceWrapper}>
               <Workspace />
             </View>
 
-            {/* Oynat / Yenile / Sil / Kod Önizleme Butonları */}
-            <View style={styles.controlsSection}>
+            {/* Kontrol Butonları */}
+            <View style={styles.controlsWrapper}>
               <PlayControls />
             </View>
           </ScrollView>
 
-          {/* Zafer Modalı */}
+          {/* Modallar */}
           <VictoryModal />
-
-          {/* Kendi Bölümünü Tasarla (Level Editor) Modalı */}
           <LevelEditorModal />
+          <ShopModal />
+          <CodePreviewModal visible={showCode} onClose={() => setShowCode(false)} />
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
@@ -151,106 +175,129 @@ const styles = StyleSheet.create({
   },
   scrollContent: {
     paddingHorizontal: 16,
-    paddingTop: 6,
+    paddingTop: 8,
     paddingBottom: 24,
   },
-  header: {
-    marginBottom: 8,
-  },
-  topRow: {
+  navBar: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 8,
   },
-  levelBadge: {
+  levelInfo: {
+    flex: 1,
+    marginRight: 8,
+  },
+  levelPill: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginBottom: 2,
+  },
+  levelPillText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#6366F1',
-    letterSpacing: 1.2,
+    color: '#4F46E5',
+    letterSpacing: 0.6,
   },
-  levelTitle: {
-    fontSize: 17,
-    fontWeight: '800',
+  levelHeading: {
+    fontSize: 18,
+    fontWeight: '900',
     color: '#0F172A',
-    marginTop: 2,
   },
-  topActionGroup: {
+  navActions: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
   },
-  editorOpenButton: {
+  starBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
     backgroundColor: '#FEF3C7',
-    paddingHorizontal: 10,
+    paddingHorizontal: 8,
     paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
+    borderRadius: 12,
+    borderWidth: 1.5,
     borderColor: '#FDE68A',
+    gap: 4,
   },
-  editorOpenButtonText: {
+  starBadgeIcon: {
     fontSize: 12,
-    fontWeight: '800',
+  },
+  starBadgeText: {
+    fontSize: 12,
+    fontWeight: '900',
     color: '#B45309',
   },
-  langButton: {
-    backgroundColor: '#EEF2FF',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 10,
-    borderWidth: 1,
-    borderColor: '#C7D2FE',
-  },
-  langButtonText: {
-    fontSize: 12,
-    fontWeight: '800',
-    color: '#4F46E5',
-  },
-  levelSelector: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingVertical: 2,
-  },
-  levelDot: {
-    paddingHorizontal: 11,
-    height: 34,
-    borderRadius: 10,
+  iconButton: {
+    width: 36,
+    height: 36,
     backgroundColor: '#FFFFFF',
+    borderRadius: 12,
     borderWidth: 1.5,
     borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
   },
-  levelDotActive: {
-    backgroundColor: '#4F46E5',
-    borderColor: '#4F46E5',
+  iconButtonEmoji: {
+    fontSize: 15,
   },
-  levelDotCompleted: {
-    backgroundColor: '#ECFDF5',
-    borderColor: '#10B981',
-  },
-  levelDotText: {
+  langText: {
     fontSize: 12,
-    fontWeight: '700',
-    color: '#64748B',
+    fontWeight: '900',
+    color: '#475569',
   },
-  levelDotTextActive: {
-    color: '#FFFFFF',
-    fontWeight: '800',
+  levelSelectorContainer: {
+    marginBottom: 8,
   },
-  levelDotTextCompleted: {
-    color: '#059669',
-    fontWeight: '800',
+  levelSelectorScroll: {
+    gap: 8,
+    paddingVertical: 2,
   },
-  gridSection: {
+  levelChip: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
     alignItems: 'center',
     justifyContent: 'center',
-    marginVertical: 4,
+    borderBottomWidth: 3,
+    borderBottomColor: '#CBD5E1',
   },
-  workspaceSection: {
+  levelChipActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#4F46E5',
+    borderBottomColor: '#3730A3',
+  },
+  levelChipCompleted: {
+    backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
+    borderBottomColor: '#6EE7B7',
+  },
+  levelChipText: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#64748B',
+  },
+  levelChipTextActive: {
+    color: '#FFFFFF',
+  },
+  levelChipTextCompleted: {
+    color: '#059669',
+  },
+  boardCard: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginVertical: 2,
+  },
+  workspaceWrapper: {
     marginTop: 6,
   },
-  controlsSection: {
-    marginTop: 8,
+  controlsWrapper: {
+    marginTop: 4,
   },
 });

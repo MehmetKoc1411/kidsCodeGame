@@ -1,7 +1,6 @@
 import { LevelConfig } from './types';
 
 export const LEVELS: LevelConfig[] = [
-  // --- Kolay & Giriş Seviyeleri (1 - 6) ---
   {
     id: 1,
     title: 'Düz İlerle',
@@ -19,10 +18,12 @@ export const LEVELS: LevelConfig[] = [
     gridSize: { rows: 5, cols: 5 },
     start: { x: 1, y: 1, direction: 'RIGHT' },
     target: { x: 3, y: 3 },
-    walls: [{ x: 2, y: 1 }, { x: 2, y: 2 }],
-    stars: [{ x: 3, y: 1 }, { x: 3, y: 2 }],
+    walls: [{ x: 2, y: 1 }],
+    doors: [{ x: 2, y: 2 }],
+    keys: [{ x: 3, y: 1 }],
+    stars: [{ x: 2, y: 0 }, { x: 3, y: 2 }, { x: 1, y: 3 }],
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT'],
-    maxBlocks: 6,
+    maxBlocks: 8,
   },
   {
     id: 3,
@@ -35,9 +36,9 @@ export const LEVELS: LevelConfig[] = [
       { x: 1, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 },
       { x: 1, y: 4 }, { x: 3, y: 4 },
     ],
-    stars: [{ x: 2, y: 0 }, { x: 4, y: 2 }],
+    stars: [{ x: 2, y: 0 }, { x: 4, y: 2 }, { x: 0, y: 3 }],
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT'],
-    maxBlocks: 8,
+    maxBlocks: 10,
   },
   {
     id: 4,
@@ -45,12 +46,10 @@ export const LEVELS: LevelConfig[] = [
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 4, direction: 'UP' },
     target: { x: 0, y: 0 },
-    walls: [
-      { x: 1, y: 1 }, { x: 1, y: 2 }, { x: 1, y: 3 },
-    ],
+    walls: [{ x: 1, y: 1 }, { x: 1, y: 2 }, { x: 1, y: 3 }],
     stars: [{ x: 0, y: 3 }, { x: 0, y: 2 }, { x: 0, y: 1 }],
     availableBlocks: ['FORWARD', 'REPEAT'],
-    maxBlocks: 3,
+    maxBlocks: 5,
   },
   {
     id: 5,
@@ -58,12 +57,10 @@ export const LEVELS: LevelConfig[] = [
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 4, direction: 'RIGHT' },
     target: { x: 4, y: 0 },
-    walls: [
-      { x: 1, y: 3 }, { x: 3, y: 1 },
-    ],
-    stars: [{ x: 2, y: 2 }, { x: 4, y: 2 }],
+    walls: [{ x: 1, y: 3 }, { x: 3, y: 1 }],
+    stars: [{ x: 1, y: 4 }, { x: 2, y: 2 }, { x: 3, y: 0 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 8,
+    maxBlocks: 10,
   },
   {
     id: 6,
@@ -78,10 +75,8 @@ export const LEVELS: LevelConfig[] = [
     ],
     stars: [{ x: 4, y: 0 }, { x: 4, y: 4 }, { x: 0, y: 4 }],
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 7,
+    maxBlocks: 10,
   },
-
-  // --- İleri Başlangıç & Döngü Giriş (7 - 10) ---
   {
     id: 7,
     title: 'Spiral Girdap',
@@ -95,7 +90,7 @@ export const LEVELS: LevelConfig[] = [
     ],
     stars: [{ x: 4, y: 0 }, { x: 4, y: 4 }, { x: 0, y: 4 }],
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 10,
+    maxBlocks: 12,
   },
   {
     id: 8,
@@ -107,12 +102,7 @@ export const LEVELS: LevelConfig[] = [
       { x: 1, y: 1 }, { x: 3, y: 1 },
       { x: 1, y: 3 }, { x: 3, y: 3 },
     ],
-    stars: [
-      { x: 0, y: 2 },
-      { x: 2, y: 2 },
-      { x: 4, y: 2 },
-      { x: 2, y: 1 },
-    ],
+    stars: [{ x: 0, y: 2 }, { x: 2, y: 2 }, { x: 4, y: 2 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
     maxBlocks: 12,
   },
@@ -126,13 +116,13 @@ export const LEVELS: LevelConfig[] = [
       { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 2, y: 1 },
       { x: 2, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 },
     ],
-    stars: [{ x: 3, y: 1 }, { x: 1, y: 3 }],
+    stars: [{ x: 1, y: 3 }, { x: 2, y: 2 }, { x: 3, y: 1 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 10,
+    maxBlocks: 12,
   },
   {
     id: 10,
-    title: 'Büyük Final: Kod Ustası',
+    title: 'Kod Ustası: Final',
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 4, direction: 'UP' },
     target: { x: 4, y: 0 },
@@ -140,16 +130,10 @@ export const LEVELS: LevelConfig[] = [
       { x: 1, y: 3 }, { x: 1, y: 2 }, { x: 1, y: 1 },
       { x: 3, y: 1 }, { x: 3, y: 2 }, { x: 3, y: 3 },
     ],
-    stars: [
-      { x: 0, y: 0 },
-      { x: 2, y: 2 },
-      { x: 4, y: 4 },
-    ],
+    stars: [{ x: 0, y: 0 }, { x: 2, y: 2 }, { x: 4, y: 4 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT', 'IF_WALL'],
-    maxBlocks: 12,
+    maxBlocks: 14,
   },
-
-  // --- Yeni Orta Seviye Haritalar (11 - 20) ---
   {
     id: 11,
     title: 'Çift Kapı Labirenti',
@@ -157,12 +141,12 @@ export const LEVELS: LevelConfig[] = [
     start: { x: 0, y: 0, direction: 'RIGHT' },
     target: { x: 4, y: 4 },
     walls: [
-      { x: 2, y: 0 }, { x: 2, y: 1 }, // Üst kapı geçidi y=2'de açık
+      { x: 2, y: 0 }, { x: 2, y: 1 },
       { x: 2, y: 3 }, { x: 2, y: 4 },
     ],
     stars: [{ x: 2, y: 2 }, { x: 0, y: 4 }, { x: 4, y: 0 }],
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
-    maxBlocks: 8,
+    maxBlocks: 10,
   },
   {
     id: 12,
@@ -170,12 +154,10 @@ export const LEVELS: LevelConfig[] = [
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 2, direction: 'RIGHT' },
     target: { x: 4, y: 2 },
-    walls: [
-      { x: 2, y: 2 }, // Tam ortada tek blokluk engel
-    ],
+    walls: [{ x: 2, y: 2 }],
     stars: [{ x: 1, y: 2 }, { x: 2, y: 1 }, { x: 3, y: 2 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'IF_WALL'],
-    maxBlocks: 7,
+    maxBlocks: 9,
   },
   {
     id: 13,
@@ -183,12 +165,10 @@ export const LEVELS: LevelConfig[] = [
     gridSize: { rows: 5, cols: 5 },
     start: { x: 2, y: 2, direction: 'UP' },
     target: { x: 2, y: 2 },
-    walls: [
-      { x: 1, y: 1 }, { x: 3, y: 3 },
-    ],
-    stars: [{ x: 2, y: 0 }, { x: 0, y: 2 }, { x: 4, y: 2 }, { x: 2, y: 4 }],
+    walls: [{ x: 1, y: 1 }, { x: 3, y: 3 }],
+    stars: [{ x: 2, y: 0 }, { x: 0, y: 2 }, { x: 4, y: 2 }],
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
-    maxBlocks: 10,
+    maxBlocks: 12,
   },
   {
     id: 14,
@@ -200,9 +180,9 @@ export const LEVELS: LevelConfig[] = [
       { x: 1, y: 3 }, { x: 2, y: 3 }, { x: 3, y: 3 },
       { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 },
     ],
-    stars: [{ x: 4, y: 4 }, { x: 0, y: 2 }, { x: 4, y: 2 }, { x: 0, y: 0 }],
+    stars: [{ x: 4, y: 4 }, { x: 0, y: 2 }, { x: 4, y: 2 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 12,
+    maxBlocks: 14,
   },
   {
     id: 15,
@@ -214,9 +194,9 @@ export const LEVELS: LevelConfig[] = [
       { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 4 },
       { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 3 }, { x: 3, y: 4 },
     ],
-    stars: [{ x: 2, y: 1 }, { x: 2, y: 3 }],
+    stars: [{ x: 0, y: 1 }, { x: 2, y: 1 }, { x: 2, y: 3 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 6,
+    maxBlocks: 8,
   },
   {
     id: 16,
@@ -229,9 +209,9 @@ export const LEVELS: LevelConfig[] = [
       { x: 0, y: 2 }, { x: 4, y: 2 },
       { x: 1, y: 1 }, { x: 3, y: 1 },
     ],
-    stars: [{ x: 2, y: 4 }, { x: 2, y: 2 }],
+    stars: [{ x: 2, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 1 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 10,
+    maxBlocks: 12,
   },
   {
     id: 17,
@@ -245,7 +225,7 @@ export const LEVELS: LevelConfig[] = [
     ],
     stars: [{ x: 0, y: 4 }, { x: 4, y: 0 }, { x: 2, y: 2 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT', 'IF_WALL'],
-    maxBlocks: 11,
+    maxBlocks: 13,
   },
   {
     id: 18,
@@ -253,12 +233,10 @@ export const LEVELS: LevelConfig[] = [
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 2, direction: 'UP' },
     target: { x: 4, y: 2 },
-    walls: [
-      { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 },
-    ],
-    stars: [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 4, y: 0 }, { x: 2, y: 4 }],
+    walls: [{ x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 3 }],
+    stars: [{ x: 0, y: 0 }, { x: 2, y: 0 }, { x: 4, y: 0 }],
     availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
-    maxBlocks: 9,
+    maxBlocks: 11,
   },
   {
     id: 19,
@@ -270,13 +248,13 @@ export const LEVELS: LevelConfig[] = [
       { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 3 }, { x: 2, y: 4 },
       { x: 0, y: 2 }, { x: 1, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 },
     ],
-    stars: [{ x: 0, y: 4 }, { x: 4, y: 0 }],
+    stars: [{ x: 0, y: 4 }, { x: 4, y: 0 }, { x: 2, y: 2 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT'],
-    maxBlocks: 10,
+    maxBlocks: 12,
   },
   {
     id: 20,
-    title: 'Grand Master: Son Meydan Okuma',
+    title: 'Kod Ustası: Şampiyonluk',
     gridSize: { rows: 5, cols: 5 },
     start: { x: 0, y: 4, direction: 'UP' },
     target: { x: 4, y: 0 },
@@ -285,12 +263,180 @@ export const LEVELS: LevelConfig[] = [
       { x: 3, y: 2 }, { x: 4, y: 2 },
       { x: 2, y: 0 }, { x: 2, y: 4 },
     ],
-    stars: [
-      { x: 0, y: 0 },
-      { x: 2, y: 2 },
-      { x: 4, y: 4 },
-    ],
+    stars: [{ x: 0, y: 0 }, { x: 2, y: 2 }, { x: 4, y: 4 }],
     availableBlocks: ['FORWARD', 'TURN_LEFT', 'TURN_RIGHT', 'REPEAT', 'IF_WALL'],
     maxBlocks: 14,
+  },
+// --- Anahtar & Kapı Mekaniği (Zorunlu Bariyer Tasarımları 21 - 30) ---
+  {
+    id: 21,
+    title: 'Kilitli Kapı ve Anahtar',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 2, direction: 'RIGHT' },
+    target: { x: 4, y: 2 },
+    // x=2 sütunu tamamen duvar, tek geçiş (2,2)'deki kapı
+    walls: [
+      { x: 2, y: 0 }, { x: 2, y: 1 },
+      { x: 2, y: 3 }, { x: 2, y: 4 },
+    ],
+    doors: [{ x: 2, y: 2 }],
+    keys: [{ x: 0, y: 0 }],
+    stars: [{ x: 1, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 0 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 10,
+  },
+  {
+    id: 22,
+    title: 'Ters Köşe Anahtar',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 4, direction: 'UP' },
+    target: { x: 4, y: 0 },
+    // Yatay y=2 hattı tamamen duvar, tek geçiş (1,2)'deki kapı
+    walls: [
+      { x: 0, y: 2 }, { x: 2, y: 2 }, { x: 3, y: 2 }, { x: 4, y: 2 },
+    ],
+    doors: [{ x: 1, y: 2 }],
+    keys: [{ x: 4, y: 4 }],
+    stars: [{ x: 0, y: 0 }, { x: 2, y: 3 }, { x: 3, y: 1 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 12,
+  },
+  {
+    id: 23,
+    title: 'Çift Kilitli Geçit',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 2, direction: 'RIGHT' },
+    target: { x: 4, y: 2 },
+    // x=1 ve x=3 sütunları komple duvar; her ikisinin de ortasında zorunlu kapı var
+    walls: [
+      { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 1, y: 3 }, { x: 1, y: 4 },
+      { x: 3, y: 0 }, { x: 3, y: 1 }, { x: 3, y: 3 }, { x: 3, y: 4 },
+    ],
+    doors: [{ x: 1, y: 2 }, { x: 3, y: 2 }],
+    keys: [{ x: 0, y: 0 }, { x: 2, y: 0 }],
+    stars: [{ x: 0, y: 4 }, { x: 2, y: 2 }, { x: 4, y: 4 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 14,
+  },
+  {
+    id: 24,
+    title: 'Hazine Odası',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 4, direction: 'UP' },
+    target: { x: 2, y: 2 },
+    // (2,2) hücresi duvarlarla çevrili, tek girişi (2,3)'teki kapı
+    walls: [
+      { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 3, y: 1 },
+      { x: 1, y: 2 },               { x: 3, y: 2 },
+      { x: 1, y: 3 },               { x: 3, y: 3 },
+    ],
+    doors: [{ x: 2, y: 3 }],
+    keys: [{ x: 4, y: 0 }],
+    stars: [{ x: 0, y: 0 }, { x: 4, y: 4 }, { x: 2, y: 0 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 12,
+  },
+  {
+    id: 25,
+    title: 'Kilitli Labirent',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 0, direction: 'RIGHT' },
+    target: { x: 4, y: 4 },
+    // Labirenti ikiye bölen x=2 duvarı; tek geçiş noktası (2,3)'teki kapı
+    walls: [
+      { x: 2, y: 0 }, { x: 2, y: 1 }, { x: 2, y: 2 }, { x: 2, y: 4 },
+      { x: 0, y: 2 }, { x: 4, y: 2 },
+    ],
+    doors: [{ x: 2, y: 3 }],
+    keys: [{ x: 0, y: 4 }],
+    stars: [{ x: 1, y: 1 }, { x: 3, y: 3 }, { x: 4, y: 0 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 12,
+  },
+  {
+    id: 26,
+    title: 'Köşe Zindanı',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 0, direction: 'DOWN' },
+    target: { x: 4, y: 4 },
+    // Hedef köşe (4,4) duvarlarla kapatılmış, girişi (3,4) kapısı
+    walls: [
+      { x: 3, y: 3 }, { x: 4, y: 3 },
+      { x: 1, y: 1 }, { x: 2, y: 1 }, { x: 1, y: 3 },
+    ],
+    doors: [{ x: 3, y: 4 }],
+    keys: [{ x: 4, y: 0 }],
+    stars: [{ x: 0, y: 4 }, { x: 2, y: 2 }, { x: 2, y: 4 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 13,
+  },
+  {
+    id: 27,
+    title: 'Geçit Nöbetçisi',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 2, direction: 'RIGHT' },
+    target: { x: 4, y: 2 },
+    // x=2 duvarı tüm ızgarayı dikey keser, tek geçiş (2,2)'deki kapıdır
+    walls: [
+      { x: 2, y: 0 }, { x: 2, y: 1 },
+      { x: 2, y: 3 }, { x: 2, y: 4 },
+    ],
+    doors: [{ x: 2, y: 2 }],
+    keys: [{ x: 0, y: 4 }],
+    stars: [{ x: 1, y: 0 }, { x: 3, y: 0 }, { x: 3, y: 4 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'IF_WALL', 'REPEAT'],
+    maxBlocks: 11,
+  },
+  {
+    id: 28,
+    title: 'Korumalı Kale',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 4, direction: 'RIGHT' },
+    target: { x: 2, y: 0 },
+    // Üst taraf y=1 seviyesinde duvarla kapatılmış, tek giriş (2,1)'deki kapı
+    walls: [
+      { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 },
+      { x: 2, y: 3 },
+    ],
+    doors: [{ x: 2, y: 1 }],
+    keys: [{ x: 4, y: 4 }],
+    stars: [{ x: 0, y: 2 }, { x: 4, y: 2 }, { x: 2, y: 2 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 12,
+  },
+  {
+    id: 29,
+    title: 'İkiz Barikat',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 2, y: 4, direction: 'UP' },
+    target: { x: 2, y: 0 },
+    // y=3 ve y=1 hatları komple duvar; her ikisinin de tek geçişi kapıdır
+    walls: [
+      { x: 0, y: 3 }, { x: 1, y: 3 }, { x: 3, y: 3 }, { x: 4, y: 3 },
+      { x: 0, y: 1 }, { x: 1, y: 1 }, { x: 3, y: 1 }, { x: 4, y: 1 },
+    ],
+    doors: [{ x: 2, y: 3 }, { x: 2, y: 1 }],
+    keys: [{ x: 0, y: 4 }, { x: 4, y: 2 }],
+    stars: [{ x: 4, y: 4 }, { x: 0, y: 2 }, { x: 2, y: 2 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT'],
+    maxBlocks: 15,
+  },
+  {
+    id: 30,
+    title: 'Şato Meydan Okuması: Usta',
+    gridSize: { rows: 5, cols: 5 },
+    start: { x: 0, y: 4, direction: 'UP' },
+    target: { x: 4, y: 0 },
+    // Hedef bayrak etrafı tamamen duvarlı (sağ üst köşe), girişi (3,0)'daki kapı
+    walls: [
+      { x: 3, y: 1 }, { x: 4, y: 1 },
+      { x: 1, y: 1 }, { x: 1, y: 2 }, { x: 1, y: 3 },
+      { x: 2, y: 3 },
+    ],
+    doors: [{ x: 3, y: 0 }],
+    keys: [{ x: 4, y: 4 }],
+    stars: [{ x: 0, y: 0 }, { x: 2, y: 2 }, { x: 2, y: 4 }],
+    availableBlocks: ['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT', 'IF_WALL'],
+    maxBlocks: 16,
   },
 ];

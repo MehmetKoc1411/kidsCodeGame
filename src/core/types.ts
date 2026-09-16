@@ -7,7 +7,7 @@ export type CommandType =
   | 'REPEAT'
   | 'IF_WALL';
 
-export type GameStatus = 'IDLE' | 'RUNNING' | 'SUCCESS' | 'FAILED';
+export type GameStatus = 'IDLE' | 'RUNNING' | 'PAUSED' | 'SUCCESS' | 'FAILED';
 
 export interface Position {
   x: number;
@@ -29,6 +29,16 @@ export interface LevelConfig {
   target: Position;
   walls: Position[];
   stars: Position[];
+  keys?: Position[];
+  doors?: Position[];
   availableBlocks: CommandType[];
   maxBlocks: number;
+}
+
+export interface Achievement {
+  id: string;
+  title: string;
+  description: string;
+  icon: string;
+  unlocked: boolean;
 }

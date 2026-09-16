@@ -1,217 +1,223 @@
 import React, { useEffect } from 'react';
-import { View, StyleSheet, Dimensions } from 'react-native';
+import { View, StyleSheet, Dimensions, Text } from 'react-native';
 import Animated, {
   useSharedValue,
   useAnimatedStyle,
   withSpring,
-  withTiming,
-  Easing,
 } from 'react-native-reanimated';
-import { Ionicons, MaterialCommunityIcons, FontAwesome5 } from '@expo/vector-icons';
 import { useGameStore } from '../../store/useGameStore';
 import { LEVELS } from '../../core/levels';
+import { Direction } from '../../core/types';
 
-const { width } = Dimensions.get('window');
-const GRID_SIZE = width - 36;
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
+const GRID_PADDING = 12;
+const BOARD_SIZE = Math.min(SCREEN_WIDTH - 32, 350);
+const CELL_SIZE = (BOARD_SIZE - GRID_PADDING * 2) / 5;
+
+const DIRECTION_ROTATION: Record<Direction, number> = {
+  UP: 0,
+  RIGHT: 90,
+  DOWN: 180,
+  LEFT: 270,
+};
+
+const SKIN_ICONS: Record<string, string> = {
+  ROBOT: '🤖',
+  CAT: '🐱',
+  DOG: '🐶',
+  UFO: '🛸',
+};
 
 export const GameGrid = () => {
   const currentLevelIndex = useGameStore((s) => s.currentLevelIndex);
   const character = useGameStore((s) => s.character);
   const collectedStars = useGameStore((s) => s.collectedStars);
+  const collectedKeys = useGameStore((s) => s.collectedKeys);
+  const openedDoors = useGameStore((s) => s.openedDoors);
+  const selectedSkin = useGameStore((s) => s.selectedSkin);
 
-  const level = LEVELS[currentLevelIndex];
-  const cellSize = GRID_SIZE / level.gridSize.cols;
+  const level = LEVELS[currentLevelIndex] || LEVELS[0];
 
-  // Akıcı hareket ve dönüş değerleri
-  const charX = useSharedValue(character.x * cellSize);
-  const charY = useSharedValue(character.y * cellSize);
-  const charRotate = useSharedValue(0);
-
-  // Açı hesaplama (Her zaman en kısa yoldan dönmesi için)
-  const getTargetAngle = () => {
-    switch (character.direction) {
-      case 'UP': return 0;
-      case 'RIGHT': return 90;
-      case 'DOWN': return 180;
-      case 'LEFT': return 270;
-    }
-  };
+  const posX = useSharedValue(character.x * CELL_SIZE);
+  const posY = useSharedValue(character.y * CELL_SIZE);
+  const rotation = useSharedValue(DIRECTION_ROTATION[character.direction]);
 
   useEffect(() => {
-    // Koordinat geçişi: Yaylanarak yumuşak kayma
-    charX.value = withSpring(character.x * cellSize, { damping: 14, stiffness: 100 });
-    charY.value = withSpring(character.y * cellSize, { damping: 14, stiffness: 100 });
-
-    // Açı geçişi
-    charRotate.value = withTiming(getTargetAngle(), {
-      duration: 250,
-      easing: Easing.out(Easing.quad),
+    posX.value = withSpring(character.x * CELL_SIZE, { damping: 14, stiffness: 140 });
+    posY.value = withSpring(character.y * CELL_SIZE, { damping: 14, stiffness: 140 });
+    rotation.value = withSpring(DIRECTION_ROTATION[character.direction], {
+      damping: 12,
+      stiffness: 150,
     });
-  }, [character.x, character.y, character.direction, cellSize]);
+  }, [character.x, character.y, character.direction]);
 
-  const animatedBotStyle = useAnimatedStyle(() => {
-    return {
-      transform: [
-        { translateX: charX.value },
-        { translateY: charY.value },
-        { rotate: `${charRotate.value}deg` },
-      ],
-    };
-  });
+  const animatedCharacterStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: posX.value },
+      { translateY: posY.value },
+      { rotate: `${rotation.value}deg` },
+    ],
+  }));
+
+  const activeIcon = SKIN_ICONS[selectedSkin] || '🤖';
 
   return (
-    <View style={[styles.boardContainer, { width: GRID_SIZE, height: GRID_SIZE }]}>
-      {/* Zemin Izgarası */}
-      {Array.from({ length: level.gridSize.rows }).map((_, r) => (
-        <View key={`row-${r}`} style={styles.row}>
-          {Array.from({ length: level.gridSize.cols }).map((_, c) => {
-            const isTarget = level.target.x === c && level.target.y === r;
-            const isWall = level.walls.some((w) => w.x === c && w.y === r);
-            const hasStar =
-              level.stars.some((s) => s.x === c && s.y === r) &&
-              !collectedStars.some((s) => s.x === c && s.y === r);
+    <View style={styles.boardContainer}>
+      <View style={styles.gridWrapper}>
+        {/* 5x5 Izgara Hücreleri */}
+        {Array.from({ length: 5 }).map((_, r) => (
+          <View key={`row_${r}`} style={styles.row}>
+            {Array.from({ length: 5 }).map((_, c) => {
+              const isWall = level.walls.some((w) => w.x === c && w.y === r);
+              const isTarget = level.target.x === c && level.target.y === r;
 
-            return (
-              <View
-                key={`cell-${r}-${c}`}
-                style={[
-                  styles.cell,
-                  { width: cellSize, height: cellSize },
-                  (r + c) % 2 === 0 ? styles.cellEven : styles.cellOdd,
-                  isWall && styles.wallCell,
-                  isTarget && styles.targetCell,
-                ]}
-              >
-                {isTarget && (
-                  <View style={styles.targetBadge}>
-                    <Ionicons name="flag" size={cellSize * 0.45} color="#10B981" />
-                  </View>
-                )}
+              const isStar = level.stars.some(
+                (s) =>
+                  s.x === c &&
+                  s.y === r &&
+                  !collectedStars.some((cs) => cs.x === c && cs.y === r)
+              );
 
-                {isWall && (
-                  <View style={styles.obstacleContainer}>
-                    <MaterialCommunityIcons name="cube-outline" size={cellSize * 0.48} color="#64748B" />
-                  </View>
-                )}
+              const isKey = level.keys?.some(
+                (k) =>
+                  k.x === c &&
+                  k.y === r &&
+                  !collectedKeys.some((ck) => ck.x === c && ck.y === r)
+              );
 
-                {hasStar && (
-                  <View style={styles.starContainer}>
-                    <Ionicons name="star" size={cellSize * 0.46} color="#F59E0B" />
-                  </View>
-                )}
-              </View>
-            );
-          })}
-        </View>
-      ))}
+              const isDoor = level.doors?.some(
+                (d) =>
+                  d.x === c &&
+                  d.y === r &&
+                  !openedDoors.some((od) => od.x === c && od.y === r)
+              );
 
-      {/* Akıcı Hareket Eden Karakter Katmanı */}
-      <Animated.View
-        style={[
-          styles.botWrapper,
-          { width: cellSize, height: cellSize },
-          animatedBotStyle,
-        ]}
-      >
-        <View
+              return (
+                <View
+                  key={`cell_${c}_${r}`}
+                  style={[
+                    styles.cell,
+                    (r + c) % 2 === 1 && styles.cellAlternate,
+                    isWall && styles.wallCell,
+                    isDoor && styles.doorCell,
+                    isTarget && styles.targetCell,
+                  ]}
+                >
+                  {isWall && <Text style={styles.wallEmoji}>🧱</Text>}
+                  {isDoor && <Text style={styles.doorEmoji}>🚪</Text>}
+                  {isKey && <Text style={styles.keyEmoji}>🔑</Text>}
+                  {isStar && <Text style={styles.starEmoji}>⭐</Text>}
+                  {isTarget && !isStar && <Text style={styles.targetEmoji}>🚩</Text>}
+                </View>
+              );
+            })}
+          </View>
+        ))}
+
+        {/* Karakter Katmanı */}
+        <Animated.View
           style={[
-            styles.characterAvatar,
-            {
-              width: cellSize * 0.78,
-              height: cellSize * 0.78,
-              borderRadius: (cellSize * 0.78) / 2,
-            },
+            styles.characterContainer,
+            { width: CELL_SIZE, height: CELL_SIZE },
+            animatedCharacterStyle,
           ]}
         >
-          <View style={styles.directionNose} />
-          <FontAwesome5 name="robot" size={cellSize * 0.42} color="#FFFFFF" />
-        </View>
-      </Animated.View>
+          <View style={styles.characterBubble}>
+            <Text style={styles.characterEmoji}>{activeIcon}</Text>
+          </View>
+        </Animated.View>
+      </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
   boardContainer: {
+    padding: GRID_PADDING,
     backgroundColor: '#FFFFFF',
-    borderRadius: 22,
-    overflow: 'hidden',
-    borderWidth: 4,
-    borderColor: '#E2E8F0',
-    borderBottomWidth: 7, // 3D zemin hissi
-    position: 'relative',
-    elevation: 6,
+    borderRadius: 24,
     shadowColor: '#64748B',
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 16,
+    shadowOffset: { width: 0, height: 6 },
+    elevation: 5,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  gridWrapper: {
+    position: 'relative',
   },
   row: {
-    flex: 1,
     flexDirection: 'row',
   },
   cell: {
+    width: CELL_SIZE,
+    height: CELL_SIZE,
+    backgroundColor: '#F8FAFC',
+    borderRadius: 12,
+    margin: 1.5,
     alignItems: 'center',
     justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: '#F1F5F9',
   },
-  cellEven: {
-    backgroundColor: '#FFFFFF',
-  },
-  cellOdd: {
-    backgroundColor: '#F8FAFC',
+  cellAlternate: {
+    backgroundColor: '#F1F5F9',
   },
   wallCell: {
     backgroundColor: '#E2E8F0',
+    borderColor: '#CBD5E1',
+    borderBottomWidth: 3,
+    borderBottomColor: '#94A3B8',
+  },
+  doorCell: {
+    backgroundColor: '#FEF3C7',
+    borderColor: '#FDE68A',
+    borderBottomWidth: 3,
+    borderBottomColor: '#D97706',
   },
   targetCell: {
     backgroundColor: '#ECFDF5',
+    borderColor: '#A7F3D0',
   },
-  obstacleContainer: {
-    backgroundColor: '#CBD5E1',
-    padding: 6,
-    borderRadius: 10,
-    borderBottomWidth: 3,
-    borderColor: '#94A3B8',
+  wallEmoji: {
+    fontSize: CELL_SIZE * 0.44,
   },
-  starContainer: {
-    shadowColor: '#F59E0B',
-    shadowOpacity: 0.5,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 0 },
-    elevation: 4,
+  doorEmoji: {
+    fontSize: CELL_SIZE * 0.46,
   },
-  targetBadge: {
-    padding: 6,
-    borderRadius: 12,
-    backgroundColor: '#D1FAE5',
+  keyEmoji: {
+    fontSize: CELL_SIZE * 0.44,
   },
-  botWrapper: {
+  starEmoji: {
+    fontSize: CELL_SIZE * 0.44,
+  },
+  targetEmoji: {
+    fontSize: CELL_SIZE * 0.46,
+  },
+  characterContainer: {
     position: 'absolute',
     top: 0,
     left: 0,
     alignItems: 'center',
     justifyContent: 'center',
-    zIndex: 10,
   },
-  characterAvatar: {
-    backgroundColor: '#6366F1',
+  characterBubble: {
+    width: CELL_SIZE * 0.82,
+    height: CELL_SIZE * 0.82,
+    borderRadius: (CELL_SIZE * 0.82) / 2,
+    backgroundColor: '#EEF2FF',
+    borderWidth: 2,
+    borderColor: '#6366F1',
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#4F46E5',
-    shadowOpacity: 0.4,
-    shadowRadius: 8,
-    shadowOffset: { width: 0, height: 4 },
-    elevation: 8,
-    borderBottomWidth: 4,
-    borderColor: '#4338CA', // Buton basma derinliği
-    position: 'relative',
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    shadowOffset: { width: 0, height: 2 },
+    elevation: 4,
   },
-  directionNose: {
-    position: 'absolute',
-    top: 2,
-    width: 6,
-    height: 6,
-    backgroundColor: '#38BDF8',
-    borderRadius: 3,
+  characterEmoji: {
+    fontSize: CELL_SIZE * 0.5,
   },
 });

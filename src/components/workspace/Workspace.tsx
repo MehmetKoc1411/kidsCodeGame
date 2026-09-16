@@ -49,16 +49,10 @@ export const Workspace = () => {
 
     if (block.type === 'REPEAT') {
       return (
-        <View
-          key={block.id}
-          style={[styles.repeatCard, isActive && styles.activeContainer]}
-        >
+        <View key={block.id} style={[styles.repeatCard, isActive && styles.activeContainer]}>
           <View style={styles.repeatHeader}>
             <Text style={styles.repeatHeaderText}>🔁 {label}</Text>
-            <TouchableOpacity
-              onPress={() => removeBlock(block.id)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
+            <TouchableOpacity onPress={() => removeBlock(block.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.deleteBadge}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -68,18 +62,15 @@ export const Workspace = () => {
               block.children.map((child) => {
                 const childVisual = BLOCK_COLORS[child.type];
                 const childLabel = t.blocks[child.type];
-                const isChildActive = activeBlockId === child.id;
-
                 return (
                   <TouchableOpacity
                     key={child.id}
                     style={[
                       styles.childTag,
                       { backgroundColor: childVisual.color, borderBottomColor: childVisual.shadowColor },
-                      isChildActive && styles.activeChildTag,
+                      activeBlockId === child.id && styles.activeChildTag,
                     ]}
                     onPress={() => removeBlock(child.id)}
-                    activeOpacity={0.8}
                   >
                     <Text style={styles.blockIconText}>{childVisual.icon}</Text>
                     <Text style={styles.childLabel}>{childLabel}</Text>
@@ -89,7 +80,7 @@ export const Workspace = () => {
               })
             ) : (
               <Text style={styles.emptyChildText}>
-                {language === 'tr' ? 'Komut ekle' : 'Add action'}
+                {language === 'tr' ? '+ Komut ekleyin' : '+ Add action'}
               </Text>
             )}
           </View>
@@ -114,16 +105,10 @@ export const Workspace = () => {
 
     if (block.type === 'IF_WALL') {
       return (
-        <View
-          key={block.id}
-          style={[styles.ifCard, isActive && styles.activeContainer]}
-        >
+        <View key={block.id} style={[styles.ifCard, isActive && styles.activeContainer]}>
           <View style={styles.ifHeader}>
             <Text style={styles.ifHeaderText}>🧱 {label}</Text>
-            <TouchableOpacity
-              onPress={() => removeBlock(block.id)}
-              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
-            >
+            <TouchableOpacity onPress={() => removeBlock(block.id)} hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}>
               <Text style={styles.deleteBadge}>✕</Text>
             </TouchableOpacity>
           </View>
@@ -133,18 +118,15 @@ export const Workspace = () => {
               block.children.map((child) => {
                 const childVisual = BLOCK_COLORS[child.type];
                 const childLabel = t.blocks[child.type];
-                const isChildActive = activeBlockId === child.id;
-
                 return (
                   <TouchableOpacity
                     key={child.id}
                     style={[
                       styles.childTag,
                       { backgroundColor: childVisual.color, borderBottomColor: childVisual.shadowColor },
-                      isChildActive && styles.activeChildTag,
+                      activeBlockId === child.id && styles.activeChildTag,
                     ]}
                     onPress={() => removeBlock(child.id)}
-                    activeOpacity={0.8}
                   >
                     <Text style={styles.blockIconText}>{childVisual.icon}</Text>
                     <Text style={styles.childLabel}>{childLabel}</Text>
@@ -154,7 +136,7 @@ export const Workspace = () => {
               })
             ) : (
               <Text style={styles.emptyChildText}>
-                {language === 'tr' ? 'Eylem ekleyin' : 'Add action'}
+                {language === 'tr' ? '+ Dönüş seçin' : '+ Add turn'}
               </Text>
             )}
           </View>
@@ -192,23 +174,26 @@ export const Workspace = () => {
         <Text style={styles.blockIconText}>{visual.icon}</Text>
         <Text style={styles.blockLabel}>{label}</Text>
         <Text style={styles.deleteBadge}>✕</Text>
-        <View style={[styles.puzzleNub, { backgroundColor: visual.color }]} />
       </TouchableOpacity>
     );
   };
 
   return (
     <View style={styles.container}>
-      {/* Sürükle-Bırak Kod Dizilim Alanı */}
+      {/* Kod Dizilim Alanı */}
       <View
         ref={dropZoneRef}
         onLayout={onDropZoneLayout}
         style={[styles.dropZone, dropZoneLayout ? styles.dropZoneReady : null]}
       >
         <View style={styles.headerRow}>
-          <Text style={styles.sectionTitle}>
-            {t.codeSequence} ({workspaceBlocks.length})
-          </Text>
+          <View style={styles.badgeLabelRow}>
+            <View style={styles.dotIndicator} />
+            <Text style={styles.sectionTitle}>{t.codeSequence}</Text>
+            <View style={styles.countPill}>
+              <Text style={styles.countPillText}>{workspaceBlocks.length}</Text>
+            </View>
+          </View>
           <Text style={styles.hintText}>{t.dragHint}</Text>
         </View>
 
@@ -223,23 +208,24 @@ export const Workspace = () => {
         </View>
       </View>
 
-      {/* Komut Blokları Paleti */}
+      {/* Komut Paleti: Eşit Dağıtılmış Tek Sıra */}
       <View style={styles.paletteSection}>
         <Text style={styles.paletteTitle}>{t.commandPalette}</Text>
         <View style={styles.paletteRow}>
           {(['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT', 'IF_WALL'] as CommandType[]).map((type) => {
             const visual = BLOCK_COLORS[type];
             return (
-              <DraggableBlock
-                key={type}
-                type={type}
-                label={t.blocks[type]}
-                color={visual.color}
-                shadowColor={visual.shadowColor}
-                icon={visual.icon}
-                dropZoneLayout={dropZoneLayout}
-                onDropSuccess={addBlock}
-              />
+              <View key={type} style={styles.paletteItem}>
+                <DraggableBlock
+                  type={type}
+                  label={t.blocks[type]}
+                  color={visual.color}
+                  shadowColor={visual.shadowColor}
+                  icon={visual.icon}
+                  dropZoneLayout={dropZoneLayout}
+                  onDropSuccess={addBlock}
+                />
+              </View>
             );
           })}
         </View>
@@ -250,7 +236,7 @@ export const Workspace = () => {
 
 const styles = StyleSheet.create({
   container: {
-    gap: 12,
+    gap: 10,
   },
   headerRow: {
     flexDirection: 'row',
@@ -258,14 +244,36 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 6,
   },
+  badgeLabelRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  dotIndicator: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: '#6366F1',
+  },
   sectionTitle: {
+    fontSize: 12,
+    fontWeight: '900',
+    color: '#334155',
+    letterSpacing: 0.5,
+  },
+  countPill: {
+    backgroundColor: '#EEF2FF',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 10,
+  },
+  countPillText: {
     fontSize: 11,
     fontWeight: '800',
-    color: '#64748B',
-    letterSpacing: 0.8,
+    color: '#4F46E5',
   },
   hintText: {
-    fontSize: 10,
+    fontSize: 11,
     fontWeight: '600',
     color: '#94A3B8',
   },
@@ -273,15 +281,19 @@ const styles = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderRadius: 18,
     padding: 10,
-    minHeight: 110,
+    minHeight: 100,
     borderWidth: 2,
     borderColor: '#E2E8F0',
     borderStyle: 'dashed',
     justifyContent: 'center',
+    shadowColor: '#0F172A',
+    shadowOpacity: 0.03,
+    shadowRadius: 8,
+    shadowOffset: { width: 0, height: 2 },
   },
   dropZoneReady: {
     borderColor: '#818CF8',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#FAFAFF',
   },
   sequenceWrapContainer: {
     flexDirection: 'row',
@@ -300,7 +312,6 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 12,
     fontWeight: '600',
-    fontStyle: 'italic',
   },
   puzzleBlockTag: {
     flexDirection: 'row',
@@ -310,7 +321,6 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     borderBottomWidth: 3,
     gap: 5,
-    position: 'relative',
   },
   activeBlockTag: {
     transform: [{ scale: 1.05 }],
@@ -319,33 +329,23 @@ const styles = StyleSheet.create({
   },
   indexBadge: {
     color: '#FFFFFF',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 10,
-    opacity: 0.75,
+    opacity: 0.8,
   },
   blockIconText: {
     fontSize: 12,
   },
   blockLabel: {
     color: '#FFFFFF',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 11,
   },
   deleteBadge: {
     color: '#FFFFFF',
     fontSize: 10,
     fontWeight: '900',
-    marginLeft: 3,
-    opacity: 0.75,
-  },
-  puzzleNub: {
-    position: 'absolute',
-    right: -3,
-    top: '36%',
-    width: 4,
-    height: 8,
-    borderTopRightRadius: 2,
-    borderBottomRightRadius: 2,
+    marginLeft: 2,
     opacity: 0.7,
   },
   repeatCard: {
@@ -367,13 +367,12 @@ const styles = StyleSheet.create({
     borderBottomColor: '#B91C1C',
     borderRadius: 12,
     padding: 6,
-    minWidth: 145,
+    minWidth: 140,
     gap: 4,
   },
   activeContainer: {
     borderColor: '#4338CA',
     borderWidth: 2,
-    transform: [{ scale: 1.03 }],
   },
   repeatHeader: {
     flexDirection: 'row',
@@ -382,7 +381,7 @@ const styles = StyleSheet.create({
   },
   repeatHeaderText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#92400E',
   },
   ifHeader: {
@@ -392,7 +391,7 @@ const styles = StyleSheet.create({
   },
   ifHeaderText: {
     fontSize: 10,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#991B1B',
   },
   childBlocksArea: {
@@ -415,7 +414,7 @@ const styles = StyleSheet.create({
   },
   childLabel: {
     color: '#FFFFFF',
-    fontWeight: '700',
+    fontWeight: '800',
     fontSize: 10,
   },
   childDeleteBadge: {
@@ -423,12 +422,11 @@ const styles = StyleSheet.create({
     fontSize: 8,
     fontWeight: '900',
     marginLeft: 2,
-    opacity: 0.8,
   },
   emptyChildText: {
     fontSize: 9,
     color: '#B45309',
-    fontStyle: 'italic',
+    fontWeight: '700',
     paddingVertical: 2,
   },
   addChildRow: {
@@ -448,17 +446,20 @@ const styles = StyleSheet.create({
   },
   paletteSection: {
     gap: 6,
+    marginTop: 2,
   },
   paletteTitle: {
     fontSize: 11,
-    fontWeight: '800',
+    fontWeight: '900',
     color: '#64748B',
     letterSpacing: 0.8,
   },
   paletteRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     gap: 6,
-    zIndex: 100,
+    justifyContent: 'space-between',
+  },
+  paletteItem: {
+    flex: 1,
   },
 });

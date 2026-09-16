@@ -1,11 +1,9 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useGameStore } from '../../store/useGameStore';
-import { CodePreviewModal } from '../workspace/CodePreviewModal';
 import { TRANSLATIONS } from '../../core/translations';
 
 export const PlayControls = () => {
-  const [showCode, setShowCode] = useState(false);
   const language = useGameStore((s) => s.language);
   const runCode = useGameStore((s) => s.runCode);
   const resetGame = useGameStore((s) => s.resetGame);
@@ -17,111 +15,90 @@ export const PlayControls = () => {
   const isRunning = status === 'RUNNING';
 
   return (
-    <View style={styles.container}>
-      <View style={styles.actionRow}>
-        <TouchableOpacity
-          style={[styles.btn, styles.runBtn, isRunning && styles.btnDisabled]}
-          onPress={runCode}
-          disabled={isRunning || workspaceBlocks.length === 0}
-          activeOpacity={0.8}
-        >
-          <Text style={styles.runBtnText}>
-            {isRunning ? t.running : t.runCode}
-          </Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.btn, styles.secondaryBtn]}
-          onPress={resetGame}
-          disabled={isRunning}
-        >
-          <Text style={styles.secondaryBtnText}>{t.reset}</Text>
-        </TouchableOpacity>
-
-        <TouchableOpacity
-          style={[styles.btn, styles.clearBtn]}
-          onPress={clearWorkspace}
-          disabled={isRunning}
-        >
-          <Text style={styles.clearBtnText}>{t.clear}</Text>
-        </TouchableOpacity>
-      </View>
-
+    <View style={styles.actionRow}>
       <TouchableOpacity
-        style={styles.codePreviewBtn}
-        onPress={() => setShowCode(true)}
-        activeOpacity={0.8}
+        style={[styles.btn, styles.runBtn, isRunning && styles.btnDisabled]}
+        onPress={runCode}
+        disabled={isRunning || workspaceBlocks.length === 0}
+        activeOpacity={0.85}
       >
-        <Text style={styles.codePreviewText}>{t.viewCode}</Text>
+        <Text style={styles.runBtnText}>
+          {isRunning ? t.running : t.runCode}
+        </Text>
       </TouchableOpacity>
 
-      <CodePreviewModal visible={showCode} onClose={() => setShowCode(false)} />
+      <TouchableOpacity
+        style={[styles.btn, styles.secondaryBtn]}
+        onPress={resetGame}
+        disabled={isRunning}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.secondaryBtnText}>{t.reset}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity
+        style={[styles.btn, styles.clearBtn]}
+        onPress={clearWorkspace}
+        disabled={isRunning}
+        activeOpacity={0.7}
+      >
+        <Text style={styles.clearBtnText}>{t.clear}</Text>
+      </TouchableOpacity>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
-    gap: 8,
-  },
   actionRow: {
     flexDirection: 'row',
     gap: 8,
+    marginTop: 4,
   },
   btn: {
-    paddingVertical: 12,
-    borderRadius: 14,
+    height: 48,
+    borderRadius: 16,
     alignItems: 'center',
     justifyContent: 'center',
   },
   runBtn: {
-    flex: 2,
+    flex: 2.2,
     backgroundColor: '#10B981',
     borderBottomWidth: 4,
-    borderBottomColor: '#059669',
+    borderBottomColor: '#047857',
   },
   runBtnText: {
     color: '#FFFFFF',
-    fontWeight: '800',
+    fontWeight: '900',
     fontSize: 14,
+    letterSpacing: 0.3,
   },
   secondaryBtn: {
     flex: 1,
-    backgroundColor: '#E2E8F0',
-    borderBottomWidth: 3,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1.5,
+    borderColor: '#E2E8F0',
+    borderBottomWidth: 4,
     borderBottomColor: '#CBD5E1',
   },
   secondaryBtnText: {
-    color: '#334155',
-    fontWeight: '700',
+    color: '#475569',
+    fontWeight: '800',
     fontSize: 13,
   },
   clearBtn: {
     flex: 1,
     backgroundColor: '#FEE2E2',
-    borderBottomWidth: 3,
-    borderBottomColor: '#FCA5A5',
+    borderWidth: 1.5,
+    borderColor: '#FECACA',
+    borderBottomWidth: 4,
+    borderBottomColor: '#F87171',
   },
   clearBtnText: {
-    color: '#DC2626',
-    fontWeight: '700',
+    color: '#B91C1C',
+    fontWeight: '800',
     fontSize: 13,
   },
-  codePreviewBtn: {
-    backgroundColor: '#1E293B',
-    paddingVertical: 10,
-    borderRadius: 12,
-    alignItems: 'center',
-    borderBottomWidth: 3,
-    borderBottomColor: '#0F172A',
-  },
-  codePreviewText: {
-    color: '#38BDF8',
-    fontWeight: '800',
-    fontSize: 12,
-    letterSpacing: 0.4,
-  },
   btnDisabled: {
-    opacity: 0.6,
+    opacity: 0.5,
   },
 });
