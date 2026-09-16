@@ -99,6 +99,13 @@ export const GameGrid = () => {
                   !openedDoors.some((od) => od.x === c && od.y === r)
               );
 
+              // 🌀 Portal Kontrolü
+              const isPortal = level.portals?.some(
+                (p) =>
+                  (p.entry.x === c && p.entry.y === r) ||
+                  (p.exit.x === c && p.exit.y === r)
+              );
+
               const isAlternate = (r + c) % 2 === 1;
 
               return (
@@ -130,6 +137,7 @@ export const GameGrid = () => {
                   {isWall && <Text style={styles.wallEmoji}>🧱</Text>}
                   {isDoor && <Text style={styles.doorEmoji}>🚪</Text>}
                   {isKey && <Text style={styles.keyEmoji}>🔑</Text>}
+                  {isPortal && <Text style={styles.portalEmoji}>🌀</Text>}
                   {isStar && <Text style={styles.starEmoji}>⭐</Text>}
                   {isTarget && !isStar && <Text style={styles.targetEmoji}>🚩</Text>}
                 </View>
@@ -188,6 +196,9 @@ const styles = StyleSheet.create({
   },
   keyEmoji: {
     fontSize: CELL_SIZE * 0.44,
+  },
+  portalEmoji: {
+    fontSize: CELL_SIZE * 0.48,
   },
   starEmoji: {
     fontSize: CELL_SIZE * 0.44,

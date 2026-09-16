@@ -50,14 +50,11 @@ export default function App() {
             {/* Üst Navigasyon Çubuğu */}
             <View style={styles.navBar}>
               <View style={styles.levelInfo}>
-                <View style={styles.levelPill}>
-                  <Text style={styles.levelPillText}>
-                    {t.levelPrefix} {currentLevel.id}
+                <View style={styles.levelBadge}>
+                  <Text style={styles.levelBadgeText}>
+                    {t.levelPrefix.toUpperCase()} {currentLevel.id}
                   </Text>
                 </View>
-                <Text style={styles.levelHeading} numberOfLines={1}>
-                  {currentLevel.title}
-                </Text>
               </View>
 
               {/* Sağ Aksiyon Kapsülleri */}
@@ -95,7 +92,6 @@ export default function App() {
                   <Text style={styles.iconButtonEmoji}>💻</Text>
                 </TouchableOpacity>
 
-                {/* Atölye / Studio */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setEditorOpen(true)}
@@ -104,7 +100,6 @@ export default function App() {
                   <Text style={styles.iconButtonEmoji}>🛠️</Text>
                 </TouchableOpacity>
 
-                {/* Dil */}
                 <TouchableOpacity
                   style={styles.iconButton}
                   onPress={() => setLanguage(language === 'tr' ? 'en' : 'tr')}
@@ -214,27 +209,21 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   levelInfo: {
-    flex: 1,
-    marginRight: 6,
+    justifyContent: 'center',
   },
-  levelPill: {
-    alignSelf: 'flex-start',
+  levelBadge: {
     backgroundColor: '#EEF2FF',
-    paddingHorizontal: 7,
-    paddingVertical: 2,
-    borderRadius: 7,
-    marginBottom: 2,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#C7D2FE',
   },
-  levelPillText: {
-    fontSize: 10,
-    fontWeight: '800',
-    color: '#4F46E5',
-    letterSpacing: 0.5,
-  },
-  levelHeading: {
-    fontSize: 16,
+  levelBadgeText: {
+    fontSize: 13,
     fontWeight: '900',
-    color: '#0F172A',
+    color: '#4F46E5',
+    letterSpacing: 0.8,
   },
   navActions: {
     flexDirection: 'row',

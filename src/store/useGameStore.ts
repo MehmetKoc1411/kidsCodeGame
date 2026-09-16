@@ -397,8 +397,23 @@ export const useGameStore = create<GameState>((set, get) => {
         currentPos.y = next.y;
         sounds.play('STEP');
 
+        // 🌀 Portal Kontrolü
+        const portal = level.portals?.find(
+          (p) =>
+            (p.entry.x === currentPos.x && p.entry.y === currentPos.y) ||
+            (p.exit.x === currentPos.x && p.exit.y === currentPos.y)
+        );
+        if (portal) {
+          const isAtEntry = portal.entry.x === currentPos.x && portal.entry.y === currentPos.y;
+          const destination = isAtEntry ? portal.exit : portal.entry;
+          currentPos.x = destination.x;
+          currentPos.y = destination.y;
+          sounds.play('STAR');
+          haptics.triggerStar();
+        }
+
         const keyHit = level.keys?.find(
-          (k) => k.x === next.x && k.y === next.y && !newKeys.some((ck) => ck.x === k.x && ck.y === k.y)
+          (k) => k.x === currentPos.x && k.y === currentPos.y && !newKeys.some((ck) => ck.x === k.x && ck.y === k.y)
         );
         if (keyHit) {
           newKeys.push(keyHit);
@@ -407,7 +422,7 @@ export const useGameStore = create<GameState>((set, get) => {
         }
 
         const starHit = level.stars.find(
-          (s) => s.x === next.x && s.y === next.y && !newStars.some((c) => c.x === s.x && c.y === s.y)
+          (s) => s.x === currentPos.x && s.y === currentPos.y && !newStars.some((c) => c.x === s.x && c.y === s.y)
         );
         if (starHit) {
           newStars.push(starHit);
@@ -534,8 +549,23 @@ export const useGameStore = create<GameState>((set, get) => {
           currentPos.y = next.y;
           sounds.play('STEP');
 
+          // 🌀 Portal Kontrolü
+          const portal = level.portals?.find(
+            (p) =>
+              (p.entry.x === currentPos.x && p.entry.y === currentPos.y) ||
+              (p.exit.x === currentPos.x && p.exit.y === currentPos.y)
+          );
+          if (portal) {
+            const isAtEntry = portal.entry.x === currentPos.x && portal.entry.y === currentPos.y;
+            const destination = isAtEntry ? portal.exit : portal.entry;
+            currentPos.x = destination.x;
+            currentPos.y = destination.y;
+            sounds.play('STAR');
+            haptics.triggerStar();
+          }
+
           const keyHit = level.keys?.find(
-            (k) => k.x === next.x && k.y === next.y && !keysCollected.some((ck) => ck.x === k.x && ck.y === k.y)
+            (k) => k.x === currentPos.x && k.y === currentPos.y && !keysCollected.some((ck) => ck.x === k.x && ck.y === k.y)
           );
           if (keyHit) {
             keysCollected = [...keysCollected, keyHit];
@@ -544,7 +574,7 @@ export const useGameStore = create<GameState>((set, get) => {
           }
 
           const starHit = level.stars.find(
-            (s) => s.x === next.x && s.y === next.y && !starsCollected.some((c) => c.x === s.x && c.y === s.y)
+            (s) => s.x === currentPos.x && s.y === currentPos.y && !starsCollected.some((c) => c.x === s.x && c.y === s.y)
           );
           if (starHit) {
             starsCollected = [...starsCollected, starHit];
