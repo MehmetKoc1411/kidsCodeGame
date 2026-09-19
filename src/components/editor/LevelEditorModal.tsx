@@ -23,6 +23,10 @@ const BRUSHES: { mode: BrushMode; labelTR: string; labelEN: string; icon: string
   { mode: 'STAR', labelTR: 'Yıldız', labelEN: 'Star', icon: '⭐' },
   { mode: 'KEY', labelTR: 'Anahtar', labelEN: 'Key', icon: '🔑' },
   { mode: 'DOOR', labelTR: 'Kapı', labelEN: 'Door', icon: '🚪' },
+  { mode: 'PORTAL_A', labelTR: 'Portal 1', labelEN: 'Portal 1', icon: '🌀' },
+  { mode: 'PORTAL_B', labelTR: 'Portal 2', labelEN: 'Portal 2', icon: '🌀' },
+  { mode: 'PLATE', labelTR: 'Plaka', labelEN: 'Plate', icon: '🔘' },
+  { mode: 'BARRIER', labelTR: 'Bariyer', labelEN: 'Barrier', icon: '🚧' },
   { mode: 'START', labelTR: 'Robot', labelEN: 'Start', icon: '🤖' },
   { mode: 'TARGET', labelTR: 'Bayrak', labelEN: 'Flag', icon: '🚩' },
   { mode: 'ERASE', labelTR: 'Silgi', labelEN: 'Eraser', icon: '🧹' },
@@ -113,6 +117,20 @@ export const LevelEditorModal = () => {
                       (d) => d.x === c && d.y === r
                     );
 
+                    // Portal ve Mekanizma Kontrolleri
+                    const isPortalA = customLevel.portals?.some(
+                      (p) => p.entry.x === c && p.entry.y === r
+                    );
+                    const isPortalB = customLevel.portals?.some(
+                      (p) => p.exit.x === c && p.exit.y === r
+                    );
+                    const isPlate = customLevel.triggers?.some(
+                      (t) => t.plate.x === c && t.plate.y === r
+                    );
+                    const isBarrier = customLevel.triggers?.some(
+                      (t) => t.barrier.x === c && t.barrier.y === r
+                    );
+
                     return (
                       <TouchableOpacity
                         key={`cell_${c}_${r}`}
@@ -120,6 +138,7 @@ export const LevelEditorModal = () => {
                           styles.cell,
                           isWall && styles.wallCell,
                           isDoor && styles.doorCell,
+                          isBarrier && styles.barrierCell,
                         ]}
                         onPress={() => handleCellClick(c, r)}
                         activeOpacity={0.7}
@@ -130,6 +149,11 @@ export const LevelEditorModal = () => {
                         {isStar && <Text style={styles.cellEmoji}>⭐</Text>}
                         {isKey && <Text style={styles.cellEmoji}>🔑</Text>}
                         {isDoor && <Text style={styles.cellEmoji}>🚪</Text>}
+                        {(isPortalA || isPortalB) && (
+                          <Text style={styles.cellEmoji}>🌀</Text>
+                        )}
+                        {isPlate && <Text style={styles.cellEmoji}>🔘</Text>}
+                        {isBarrier && <Text style={styles.cellEmoji}>🚧</Text>}
                       </TouchableOpacity>
                     );
                   })}
@@ -142,30 +166,38 @@ export const LevelEditorModal = () => {
               {language === 'tr' ? 'Kullanılabilir Bloklar:' : 'Available Blocks:'}
             </Text>
             <View style={styles.blocksToggleRow}>
-              {(['FORWARD', 'TURN_RIGHT', 'TURN_LEFT', 'REPEAT', 'IF_WALL'] as CommandType[]).map(
-                (cmd) => {
-                  const isChecked = customLevel.availableBlocks.includes(cmd);
-                  return (
-                    <TouchableOpacity
-                      key={cmd}
+              {(
+                [
+                  'FORWARD',
+                  'TURN_RIGHT',
+                  'TURN_LEFT',
+                  'REPEAT',
+                  'IF_WALL',
+                  'FUNCTION',
+                  'CALL_FUNCTION',
+                ] as CommandType[]
+              ).map((cmd) => {
+                const isChecked = customLevel.availableBlocks.includes(cmd);
+                return (
+                  <TouchableOpacity
+                    key={cmd}
+                    style={[
+                      styles.blockToggleChip,
+                      isChecked && styles.blockToggleChipActive,
+                    ]}
+                    onPress={() => toggleAvailableBlock(cmd)}
+                  >
+                    <Text
                       style={[
-                        styles.blockToggleChip,
-                        isChecked && styles.blockToggleChipActive,
+                        styles.blockToggleText,
+                        isChecked && styles.blockToggleTextActive,
                       ]}
-                      onPress={() => toggleAvailableBlock(cmd)}
                     >
-                      <Text
-                        style={[
-                          styles.blockToggleText,
-                          isChecked && styles.blockToggleTextActive,
-                        ]}
-                      >
-                        {cmd}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                }
-              )}
+                      {cmd}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
 
             {/* Alt İşlem Butonları */}
@@ -299,6 +331,10 @@ const styles = StyleSheet.create({
   doorCell: {
     backgroundColor: '#FEF3C7',
     borderColor: '#F59E0B',
+  },
+  barrierCell: {
+    backgroundColor: '#FEE2E2',
+    borderColor: '#FCA5A5',
   },
   cellEmoji: {
     fontSize: CELL_SIZE * 0.45,

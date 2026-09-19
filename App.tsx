@@ -11,6 +11,7 @@ import { ShopModal } from './src/components/modals/ShopModal';
 import { ThemeModal } from './src/components/modals/ThemeModal';
 import { AchievementsModal } from './src/components/modals/AchievementsModal';
 import { CodePreviewModal } from './src/components/workspace/CodePreviewModal';
+import { TutorialModal } from './src/components/modals/TutorialModal';
 import { useGameStore } from './src/store/useGameStore';
 import { useEditorStore } from './src/store/useEditorStore';
 import { LEVELS } from './src/core/levels';
@@ -57,7 +58,7 @@ export default function App() {
                 </View>
               </View>
 
-              {/* Sağ Aksiyon Kapsülleri */}
+              {/* Sağ Aksiyon Butonları */}
               <View style={styles.navActions}>
                 <TouchableOpacity
                   style={styles.starBadge}
@@ -110,7 +111,7 @@ export default function App() {
               </View>
             </View>
 
-            {/* Yatay Bölüm Seçici Çubuğu */}
+            {/* Yatay Seviye Seçici Listesi */}
             <View style={styles.levelSelectorContainer}>
               <ScrollView
                 horizontal
@@ -136,6 +137,7 @@ export default function App() {
                           collectedStars: [],
                           collectedKeys: [],
                           openedDoors: [],
+                          activePlates: [],
                           workspaceBlocks: [],
                           activeBlockId: null,
                           status: 'IDLE',
@@ -160,17 +162,17 @@ export default function App() {
               </ScrollView>
             </View>
 
-            {/* 5x5 Izgara */}
+            {/* 5x5 Harita Alanı */}
             <View style={styles.boardCard}>
               <GameGrid />
             </View>
 
-            {/* Kod Dizilimi ve Komut Blokları */}
+            {/* Algoritma Çalışma Alanı */}
             <View style={styles.workspaceWrapper}>
               <Workspace />
             </View>
 
-            {/* Kontrol Butonları */}
+            {/* Kontrol Çubuğu */}
             <View style={styles.controlsWrapper}>
               <PlayControls />
             </View>
@@ -183,6 +185,7 @@ export default function App() {
           <ThemeModal visible={showThemeModal} onClose={() => setShowThemeModal(false)} />
           <AchievementsModal />
           <CodePreviewModal visible={showCode} onClose={() => setShowCode(false)} />
+          <TutorialModal />
         </SafeAreaView>
       </SafeAreaProvider>
     </GestureHandlerRootView>
